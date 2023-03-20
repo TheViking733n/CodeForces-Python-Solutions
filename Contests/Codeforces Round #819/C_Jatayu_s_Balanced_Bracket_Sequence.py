@@ -1,0 +1,1 @@
+print(*[int(input())-input().count(')(') for _ in range(int(input()))],sep='\n')

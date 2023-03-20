@@ -1,0 +1,1 @@
+{"name":"Local: B_Vera_And_LCS","url":"c:\\Users\\acer\\Desktop\\CodeForces\\B_Vera_And_LCS.py","tests":[{"id":1647187006667,"input":"4 2\nvera","output":"eats"},{"id":1647187021607,"input":"4 5\nvera","output":"WRONGANSWER"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"c:\\Users\\acer\\Desktop\\CodeForces\\B_Vera_And_LCS.py","group":"local","local":true}

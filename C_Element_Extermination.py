@@ -1,0 +1,1 @@
+_=[(lambda n,arr: print("YES" if arr[0]<arr[-1] else "NO"))(int(input()),[int(i) for i in input().split()]) for _ in range(int(input()))]

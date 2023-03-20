@@ -1,0 +1,1 @@
+_=input(),print(*sorted(input().replace('0','').replace('1','').replace('9','7233').replace('8','7222').replace('6','53').replace('4','322'),reverse=True),sep='')
