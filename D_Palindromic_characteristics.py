@@ -163,7 +163,7 @@ def main():
             ans[i] = sm
 
 
-        print(*ans)
+        # print(*ans)
         
 
 
@@ -178,18 +178,20 @@ def main():
         # # Palindromic Tree solution
 
 
-        # tree = pal_tree(s)
+        tree = pal_tree(s)
             
-        # for i in range(len(s)):
-        #     tree.insert(i)  
+        for i in range(len(s)):
+            tree.insert(i)  
             
-        # tree.compute_occurrences()
+        tree.compute_occurrences()
 
-        # ch = [0]*len(s)
-        # for pal in tree.palindromes:
-        #     for c in range(1, pal.characteristic+1):
-        #         ch[c-1] += pal.num_occ
-        # print(*ch)     
+        ch = [0]*len(s)
+        for pal in tree.palindromes:
+            # print(pal.characteristic)
+            for c in range(1, pal.characteristic+1):
+                ch[c-1] += pal.num_occ
+                # print('  ', pal.num_occ)
+        print(*ch)     
 
 
 
