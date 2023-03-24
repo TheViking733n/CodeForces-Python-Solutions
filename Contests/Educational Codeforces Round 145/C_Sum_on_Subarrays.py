@@ -27,72 +27,43 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
 
 
 def main():
     TestCases = 1
     TestCases = int(input())
+    triangular = [0]
+    for i in range(1, 100):
+        triangular.append(triangular[-1] + i)
     
     for _ in range(TestCases):
-        # n,k = [int(i) for i in input().split()]
-        # n = int(input())
-        # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
+        n,k = [int(i) for i in input().split()]
 
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
-            else:
+        ans = []
+        idx = bisect_left(triangular, k)
+        if triangular[idx] != k:
+            idx -= 1
+        # print(k, triangular[idx], idx)
+        x = triangular[idx]
+        excess = k - x
+        for i in range(idx):
+            ans.append(2)
+        # print(excess, idx)
+        if excess > 0:
+            y = excess - idx
+            ans.append(2 * y - 1)
+        while len(ans) < n:
+            ans.append(-1000)
+        for i in range(n-1):
+            if ans[i+1] == 0:
+                ans[i+1] = -1
+                ans[i] += 1
                 break
+        print(*ans)
+        # print()
         
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
-            continue
-
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
-
-
-
-
         
+
         
         
         

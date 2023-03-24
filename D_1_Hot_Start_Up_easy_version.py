@@ -27,19 +27,6 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
 
 
 def main():
@@ -47,53 +34,58 @@ def main():
     TestCases = int(input())
     
     for _ in range(TestCases):
-        # n,k = [int(i) for i in input().split()]
-        # n = int(input())
-        # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
+        n, k = [int(i) for i in input().split()]
+        arr = [int(i) - 1 for i in input().split()]
+        cold = [int(i) for i in input().split()]
+        hot = [int(i) for i in input().split()]
 
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
-            else:
-                break
-        
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
+        if k == 1:
+            print(cold[0] * (n - 1) + hot[0])
             continue
 
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
-
-
-
-
+        freq = defaultdict(int)
+        st = 0
+        for i in arr:
+            freq[i] += 1
+            st += 1
+            if len(freq) > 1:
+                break
         
+        tasks = list(freq.keys())
+        if len(tasks) == 1:
+            print(cold[tasks[0]] * (n - 1) + hot[tasks[0]])
+            continue
+
+        k1, k2 = tasks
+        t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
+        emp = [-1, -1]
+        dp = [emp for _ in range(k)]
+        dp[k1] = [t0, k2]
+        dp[k2] = [t0, k1]
+
+        for cur in range(st, k):
+            if dp[cur] != emp:
+                dp[cur][0] += cold[cur]
+                k2 = dp[cur][1]
+                dp[k2][0] = dp[cur][0]
+                continue
+            dp[cur] = [INF, INF]
+            for i in range(k):
+                if dp[i] == emp:
+                    continue
+                dp[i][0] += hot[cur]
+                # k2 = dp[i][1]
+                dp[i][1] = cur
+                dp[cur] = min(dp[cur], [dp[i][0], i])
         
+        print(([i[0] for i in dp if i != emp]))
+                
+
+
+
+
+
+
         
         
         

@@ -27,72 +27,49 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
+def make_nCr_mod(max_n=2 * 10**5, mod=10**9 + 7):
+    max_n = min(max_n, mod - 1)
+
+    fact, inv_fact = [0] * (max_n + 1), [0] * (max_n + 1)
+    fact[0] = 1
+    for i in range(max_n):
+        fact[i + 1] = fact[i] * (i + 1) % mod
+
+    inv_fact[-1] = pow(fact[-1], mod - 2, mod)
+    for i in reversed(range(max_n)):
+        inv_fact[i] = inv_fact[i + 1] * (i + 1) % mod
+
+    def nCr_mod(n, r):
+        res = 1
+        while n or r:
+            a, b = n % mod, r % mod
+            if a < b:
+                return 0
+            res = res * fact[a] % mod * inv_fact[b] % mod * inv_fact[a - b] % mod
+            n //= mod
+            r //= mod
+        return res
+
+    return nCr_mod
+
+
 
 
 def main():
     TestCases = 1
-    TestCases = int(input())
+    # TestCases = int(input())
     
     for _ in range(TestCases):
-        # n,k = [int(i) for i in input().split()]
+        n, M = [int(i) for i in input().split()]
         # n = int(input())
         # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
+        # s = input()
+        nCr = make_nCr_mod(n, 100000)
+        ans = []
+        for r in range(n+1):
+            ans.append(nCr(n, r))
+        print(*ans)
 
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
-            else:
-                break
-        
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
-            continue
-
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
-
-
-
-
-        
         
         
         

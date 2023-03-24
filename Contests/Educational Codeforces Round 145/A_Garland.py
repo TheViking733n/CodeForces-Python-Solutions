@@ -27,19 +27,6 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
 
 
 def main():
@@ -50,49 +37,17 @@ def main():
         # n,k = [int(i) for i in input().split()]
         # n = int(input())
         # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
-
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
-            else:
-                break
-        
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
+        s = list(input())
+        freq = Counter(s).most_common()
+        x = [i[1] for i in freq]
+        # print(x)
+        if len(x) == 1:
+            print(-1)
             continue
-
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
-
-
-
-
-        
+        if x == [3, 1]:
+            print(6)
+            continue
+        print(4)
         
         
         

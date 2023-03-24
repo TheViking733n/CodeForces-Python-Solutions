@@ -27,72 +27,33 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
 
 
 def main():
     TestCases = 1
-    TestCases = int(input())
+    # TestCases = int(input())
     
     for _ in range(TestCases):
         # n,k = [int(i) for i in input().split()]
-        # n = int(input())
-        # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
+        n = int(input())
+        arr = [int(i) for i in input().split()]
+        # s = input()
+        dp = [-INF] * n
+        dp[-1] = arr[-1]
+        ps = [0]
+        for i in arr:
+            ps.append(ps[-1] + i)
 
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
-            else:
-                break
-        
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
-            continue
-
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
+        for i in range(n-2, -1, -1):
+            for k in range(1, n-i):
+                must = ps[min(i+2*k, n)] - ps[i+k] + arr[i]
+                last = min(i+2*k, n) - 1
+                must -= arr[last]
+                cur = dp[last] + must
+                dp[i] = max(dp[i], cur)
+        print(dp[0])
 
 
-
-
-        
         
         
         

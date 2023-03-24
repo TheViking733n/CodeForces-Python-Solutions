@@ -27,72 +27,132 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def manacher(s):
-    s = '#' + '#'.join(s) + '#'
-    n = len(s)
-    p = [0] * n
-    c = r = 0
-    for i in range(1, n):
-        if i < r:
-            p[i] = min(r - i, p[2 * c - i])
-        while i - p[i] - 1 >= 0 and i + p[i] + 1 < n and s[i - p[i] - 1] == s[i + p[i] + 1]:
-            p[i] += 1
-        if i + p[i] > r:
-            c, r = i, i + p[i]
-    return p[1:-1]
 
+def solve(q):
+    # freq = [0, 0]
+    # for i in q:
+    #     freq[i] += 1
+
+    ans = 0
+    e12 = int(1e12)
+
+    while len(q) > 1:
+        if q[0] == 0:
+            q.popleft()
+            continue
+        if q[-1] == 1:
+            q.pop()
+            continue
+        if q[-1] == 0 and q[-2] == 1:
+            q.pop()
+            q[-1] = 0
+            ans += e12
+            continue
+        q.popleft()
+        ans += e12 + 1
+    return ans
+
+def CeilIndex(A, l, r, key):
+  
+    while (r - l > 1):
+      
+        m = l + (r - l)//2
+        if (A[m] >= key):
+            r = m
+        else:
+            l = m
+    return r
+   
+def LongestIncreasingSubsequenceLength(A):
+    size = len(A)
+  
+    # Add boundary case,
+    # when array size is one
+   
+    tailTable = [0 for i in range(size + 1)]
+    ln = 0 # always points empty slot
+   
+    tailTable[0] = A[0]
+    ln = 1
+    for i in range(1, size):
+      
+        if (A[i] < tailTable[0]):
+  
+            # new smallest value
+            tailTable[0] = A[i]
+   
+        elif (A[i] >= tailTable[ln-1]):
+  
+            # A[i] wants to extend
+            # largest subsequence
+            tailTable[ln] = A[i]
+            ln+= 1
+   
+        else:
+            # A[i] wants to be current
+            # end candidate of an existing
+            # subsequence. It will replace
+            # ceil value in tailTable
+            tailTable[CeilIndex(tailTable, -1, ln-1, A[i])] = A[i]
+          
+   
+    return ln
+  
+
+def solve2(q):
+
+    ans = 0
+    e12 = int(1e12)
+
+    while len(q) > 1:
+        if q[0] == 0:
+            q.popleft()
+            continue
+        if q[-1] == 1:
+            q.pop()
+            continue
+        if len(q) == 2:
+            q.popleft()
+            ans += e12
+            continue
+        if q[0] == q[1]:
+            q.pop()
+            ans += e12 + 1
+            continue
+        q.popleft()
+        ans += e12 + 1
+    return ans
 
 def main():
     TestCases = 1
     TestCases = int(input())
+    lis = LongestIncreasingSubsequenceLength
     
     for _ in range(TestCases):
-        # n,k = [int(i) for i in input().split()]
-        # n = int(input())
-        # arr = [int(i) for i in input().split()]
-        s = input()
-        n = len(s)
-        # print('   '.join(s))
-        # print(*palin)
-
-        k = 0
-        for i in range(n):
-            if s[i] == s[n - i - 1]:
-                k += 1
+        arr = [int(i) for i in input()]
+        q = deque(arr)
+        while q:
+            if q[0] == 0:
+                q.popleft()
+            elif q[-1] == 1:
+                q.pop()
             else:
                 break
-        
-        mid = s[k:n-k]
-        if not mid:
-            print(s)
+        if not q:
+            print(0)
             continue
-
-        m = len(mid)
-        # print(mid)
-        palin = manacher(mid)
-        # print(palin)
-        lmax = rmax = 0
-        for i in range(m):
-            l, r = 2 * i + 1, 2 * (m - i) - 1
-            if l == palin[2 * i]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i]:
-                rmax = max(rmax, r)
-        for i in range(m - 1):
-            l, r = 2 * (i + 1), 2 * (m - i - 1)
-            # print(i, l, r, palin[2 * i + 1])
-            if l == palin[2 * i + 1]:
-                lmax = max(lmax, l)
-            if r == palin[2 * i + 1]:
-                rmax = max(rmax, r)
-        mx = mid[:lmax] if lmax >= rmax else mid[len(mid)-rmax:]
-        print(s[:k] + mx + s[n-k:])
-            
+        arr = list(q)
+        q2 = deque([1 - i for i in arr][::-1])
+        # print(lis(arr))
+        # print(list(q))
+        # print(list(q2))
+        q_ = deque(arr)
+        q2_ = deque([1 - i for i in arr][::-1])
+        print(min([solve(q), solve(q2), solve2(q_), solve2(q2_), (len(arr) - lis(arr)) * (int(1e12) + 1)]))
 
 
 
 
-        
         
         
         
