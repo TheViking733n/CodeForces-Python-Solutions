@@ -34,88 +34,23 @@ def main():
     TestCases = int(input())
     
     for _ in range(TestCases):
-        n, k = [int(i) for i in input().split()]
-        arr = [int(i) - 1 for i in input().split()]
-        hot = [int(i) for i in input().split()]
-        cold = [int(i) for i in input().split()]
+        n, k, q = [int(i) for i in input().split()]
+        # n = int(input())
+        a = [int(i) for i in input().split()]
+        # s = input()
+        d = [0] * (n + 1)
+        for qq in range(q):
+            l, r = [int(i)-1 for i in input().split()]
+            d[l] += 1
+            d[r + 1] -= 1
+        sm = 0
+        for i in range(len(d)):
+            sm += d[i]
+            d[i] = 1 if sm > 0 else 0
+        print(sum(a[i]*(1-d[i])+k*d[i] for i in range(n)))
 
-        if k == 1:
-            print(cold[0] * (n - 1) + hot[0])
-            continue
-
-        freq = defaultdict(int)
-        st = 0
-        for i in arr:
-            freq[i] += 1
-            st += 1
-            if len(freq) > 1:
-                break
         
-        tasks = list(freq.keys())
-        if len(tasks) == 1:
-            print(cold[tasks[0]] * (n - 1) + hot[tasks[0]])
-            continue
-
-        k1, k2 = tasks
-        t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
-        emp = [-1, -1]
-        dp = [emp for _ in range(k)]
-        dp[k1] = [t0, k2]
-        dp[k2] = [t0, k1]
-
-        for ii in range(st, n):
-            print(dp)
-            cur = arr[ii]
-            for i in range(k):
-                if dp[i] == emp:
-                    continue
-                k2 = dp[i][1]
-                dp[i][0] += cold[cur] if cur in [i, k2] else hot[cur]
-                if i != cur:
-                    dp[i][1] = cur
-            if dp[cur] == emp:
-                continue
-            t, k2 = dp[cur]
-            dp[k2] = [t, cur]
-            dp[cur] = emp
-        print(dp)
-
-
-
-
-        # print()
-        # print(k1, t0, k2)
-        # for ii in range(st, n):
-        #     # print(dp)
-        #     cur = arr[ii]
-        #     if dp[cur] != emp:
-        #         dp[cur][0] += cold[cur]
-        #         k2 = dp[cur][1]
-        #         dp[k2] = [dp[cur][0], cur]
-        #         for i in range(k):
-        #             if dp[i] == emp or i == cur or i == k2:
-        #                 continue
-        #             dp[i][0] += hot[cur]
-        #             dp[i][1] = cur
-        #         continue
-        #     dp[cur] = [INF, INF]
-        #     for i in range(k):
-        #         if dp[i] == emp or i == cur:
-        #             continue
-        #         dp[i][0] += hot[cur]
-        #         # k2 = dp[i][1]
-        #         dp[i][1] = cur
-        #         dp[cur] = min(dp[cur], [dp[i][0], i])
         
-        # print(min([i[0] for i in dp if i != emp]))
-        # # print([i[0] for i in dp if i != emp])
-                
-
-
-
-
-
-
         
         
         

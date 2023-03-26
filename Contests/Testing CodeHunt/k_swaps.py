@@ -1,0 +1,1 @@
+print(*[(lambda n,k,s,t:"NO" if False in [sorted(s[i::k])==sorted(t[i::k]) for i in range(k)] else "YES")(*[int(i) for i in input().split()], input(), input()) for _ in range(int(input()))],sep='\n')        

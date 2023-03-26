@@ -28,94 +28,28 @@ R = randrange(2, 1 << 32)
 # ========================= Main ==========================
 
 
+def kadane(arr):
+    mn = curmin = arr[0]
+    for i in range(1, len(arr)):
+        curmin = min(arr[i], curmin + arr[i])
+        mn = min(mn, curmin)
+
+    mn = min(0, mn)  # SPECIAL CASE: If all elements +ve, take none
+    return mn
 
 def main():
     TestCases = 1
-    TestCases = int(input())
+    # TestCases = int(input())
     
     for _ in range(TestCases):
-        n, k = [int(i) for i in input().split()]
-        arr = [int(i) - 1 for i in input().split()]
-        hot = [int(i) for i in input().split()]
-        cold = [int(i) for i in input().split()]
+        # n,k = [int(i) for i in input().split()]
+        n = int(input())
+        arr = [int(i) for i in input().split()]
+        # s = input()
+        print(sum(arr) - kadane(arr))
 
-        if k == 1:
-            print(cold[0] * (n - 1) + hot[0])
-            continue
-
-        freq = defaultdict(int)
-        st = 0
-        for i in arr:
-            freq[i] += 1
-            st += 1
-            if len(freq) > 1:
-                break
         
-        tasks = list(freq.keys())
-        if len(tasks) == 1:
-            print(cold[tasks[0]] * (n - 1) + hot[tasks[0]])
-            continue
-
-        k1, k2 = tasks
-        t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
-        emp = [-1, -1]
-        dp = [emp for _ in range(k)]
-        dp[k1] = [t0, k2]
-        dp[k2] = [t0, k1]
-
-        for ii in range(st, n):
-            print(dp)
-            cur = arr[ii]
-            for i in range(k):
-                if dp[i] == emp:
-                    continue
-                k2 = dp[i][1]
-                dp[i][0] += cold[cur] if cur in [i, k2] else hot[cur]
-                if i != cur:
-                    dp[i][1] = cur
-            if dp[cur] == emp:
-                continue
-            t, k2 = dp[cur]
-            dp[k2] = [t, cur]
-            dp[cur] = emp
-        print(dp)
-
-
-
-
-        # print()
-        # print(k1, t0, k2)
-        # for ii in range(st, n):
-        #     # print(dp)
-        #     cur = arr[ii]
-        #     if dp[cur] != emp:
-        #         dp[cur][0] += cold[cur]
-        #         k2 = dp[cur][1]
-        #         dp[k2] = [dp[cur][0], cur]
-        #         for i in range(k):
-        #             if dp[i] == emp or i == cur or i == k2:
-        #                 continue
-        #             dp[i][0] += hot[cur]
-        #             dp[i][1] = cur
-        #         continue
-        #     dp[cur] = [INF, INF]
-        #     for i in range(k):
-        #         if dp[i] == emp or i == cur:
-        #             continue
-        #         dp[i][0] += hot[cur]
-        #         # k2 = dp[i][1]
-        #         dp[i][1] = cur
-        #         dp[cur] = min(dp[cur], [dp[i][0], i])
         
-        # print(min([i[0] for i in dp if i != emp]))
-        # # print([i[0] for i in dp if i != emp])
-                
-
-
-
-
-
-
         
         
         
