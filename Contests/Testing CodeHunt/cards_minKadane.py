@@ -38,6 +38,7 @@ def kadane(arr):
     return mn
 
 def main():
+    
     TestCases = 1
     # TestCases = int(input())
     
