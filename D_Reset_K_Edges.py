@@ -20,182 +20,63 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-INF = int(1e18)
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-class SegmentTree:
-    def __init__(self, data, default=INF, func=min):
-        """initialize the segment tree with data"""
-        self._default = default
-        self._func = func
-        self._len = len(data)
-        self._size = _size = 1 << (self._len - 1).bit_length()
-
-        self.data = [default] * (2 * _size)
-        self.data[_size:_size + self._len] = data
-        for i in reversed(range(_size)):
-            self.data[i] = func(self.data[i + i], self.data[i + i + 1])
-
-    def __delitem__(self, idx):
-        self[idx] = self._default
-
-    def __getitem__(self, idx):
-        return self.data[idx + self._size]
-
-    def __setitem__(self, idx, value):
-        idx += self._size
-        self.data[idx] = value
-        idx >>= 1
-        while idx:
-            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1])
-            idx >>= 1
-
-    def __len__(self):
-        return self._len
-
-    def query(self, start, stop):
-        """func of data[start, stop)"""
-        start += self._size
-        stop += self._size
-
-        res_left = res_right = self._default
-        while start < stop:
-            if start & 1:
-                res_left = self._func(res_left, self.data[start])
-                start += 1
-            if stop & 1:
-                stop -= 1
-                res_right = self._func(self.data[stop], res_right)
-            start >>= 1
-            stop >>= 1
-
-        return self._func(res_left, res_right)
-
-    def __repr__(self):
-        return "SegmentTree({0})".format(self.data)
-
 
 
 def main():
-    global dp
     TestCases = 1
     TestCases = int(input())
     
     for _ in range(TestCases):
         n, k = [int(i) for i in input().split()]
-        arr = [int(i) - 1 for i in input().split()]
-        hot = [int(i) for i in input().split()]
-        cold = [int(i) for i in input().split()]
+        par = [int(i)-1 for i in input().split()]
+        g = [[] for i in range(n)]
+        for i in range(n-1):
+            g[par[i]].append(i+1)
+        # print(g)
 
-        if k == 1:
-            print(cold[0] * (n - 1) + hot[0])
+        dis = [0] * n
+        q = deque([0])
+        while q:
+            u = q.popleft()
+            for v in g[u]:
+                dis[v] = dis[u] + 1
+                q.append(v)
+        ans = max(dis)
+        # print(dis)
+        if k == 0:
+            print(ans)
             continue
 
-        # freq = defaultdict(int)
-        # st = 0
-        # for i in arr:
-        #     freq[i] += 1
-        #     st += 1
-        #     if len(freq) > 1:
-        #         break
-        
-        # tasks = list(freq.keys())
-        # if len(tasks) == 1:
-        #     print(cold[tasks[0]] * (n - 1) + hot[tasks[0]])
-        #     continue
-
-        # k1, k2 = tasks
-        # t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
-        
-        dp = SegmentTree([INF] * k)
-        dp[arr[0]] = hot[arr[0]]
-        prev = arr[0]
-        ans = 0
-        for i in range(1, n):
-            # cur = arr[i]
-            # for i in range(k):
-            #     dp[i] += cold[cur] if cur in [prev, i] else hot[cur]
-            # dp[prev] = min(dp)
-            # prev = cur
-            cur = arr[i]
-            ans += cold[cur] if cur == prev else hot[cur]
-            if prev != cur:
-                dp[cur] += cold[cur] - hot[cur]
-            dp[prev] = dp.query(0, k)
-            prev = cur
+        l, r = 1, n - 1
+        while l <= r:
+            mid = l + r >> 1
+            q = deque([0])
+            cnt = 0
+            while q:
+                u = q.popleft()
+                for v in g[u]:
+                    dis[v] = dis[u] + 1
+                    if dis[v] > mid:
+                        dis[v] = 1
+                        cnt += 1
+                    q.append(v)
+            # Now max depth of this graph is mid and no. of cuts required is cnt
+            if cnt <= k:
+                r = mid - 1
+                ans = mid
+            else:
+                l = mid + 1
+        print(ans)
 
         
-        print(ans + dp.query(0, k))
-
-
-
-
-
-
-
-
-        # emp = [-1, -1]
-        # dp = [emp for _ in range(k)]
-        # dp[k1] = [t0, k2]
-        # dp[k2] = [t0, k1]
-
-        # for ii in range(st, n):
-        #     print(dp)
-        #     cur = arr[ii]
-        #     for i in range(k):
-        #         if dp[i] == emp:
-        #             continue
-        #         k2 = dp[i][1]
-        #         dp[i][0] += cold[cur] if cur in [i, k2] else hot[cur]
-        #         if i != cur:
-        #             dp[i][1] = cur
-        #     if dp[cur] == emp:
-        #         continue
-        #     t, k2 = dp[cur]
-        #     dp[k2] = [t, cur]
-        #     dp[cur] = emp
-        # print(dp)
-
-
-
-
-        # print()
-        # print(k1, t0, k2)
-        # for ii in range(st, n):
-        #     # print(dp)
-        #     cur = arr[ii]
-        #     if dp[cur] != emp:
-        #         dp[cur][0] += cold[cur]
-        #         k2 = dp[cur][1]
-        #         dp[k2] = [dp[cur][0], cur]
-        #         for i in range(k):
-        #             if dp[i] == emp or i == cur or i == k2:
-        #                 continue
-        #             dp[i][0] += hot[cur]
-        #             dp[i][1] = cur
-        #         continue
-        #     dp[cur] = [INF, INF]
-        #     for i in range(k):
-        #         if dp[i] == emp or i == cur:
-        #             continue
-        #         dp[i][0] += hot[cur]
-        #         # k2 = dp[i][1]
-        #         dp[i][1] = cur
-        #         dp[cur] = min(dp[cur], [dp[i][0], i])
-        
-        # print(min([i[0] for i in dp if i != emp]))
-        # # print([i[0] for i in dp if i != emp])
-                
-
-
-
-
-
-
         
         
         

@@ -20,182 +20,207 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-INF = int(1e18)
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-class SegmentTree:
-    def __init__(self, data, default=INF, func=min):
-        """initialize the segment tree with data"""
-        self._default = default
-        self._func = func
-        self._len = len(data)
-        self._size = _size = 1 << (self._len - 1).bit_length()
+from types import GeneratorType
+def bootstrap(f, stack=[]):
+    def wrappedfunc(*args, **kwargs):
+        if stack:
+            return f(*args, **kwargs)
+        else:
+            to = f(*args, **kwargs)
+            while True:
+                if type(to) is GeneratorType:
+                    stack.append(to)
+                    to = next(to)
+                else:
+                    stack.pop()
+                    if not stack:
+                        break
+                    to = stack[-1].send(to)
+            return to
+    return wrappedfunc
 
-        self.data = [default] * (2 * _size)
-        self.data[_size:_size + self._len] = data
-        for i in reversed(range(_size)):
-            self.data[i] = func(self.data[i + i], self.data[i + i + 1])
-
-    def __delitem__(self, idx):
-        self[idx] = self._default
-
-    def __getitem__(self, idx):
-        return self.data[idx + self._size]
-
-    def __setitem__(self, idx, value):
-        idx += self._size
-        self.data[idx] = value
-        idx >>= 1
-        while idx:
-            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1])
-            idx >>= 1
-
-    def __len__(self):
-        return self._len
-
-    def query(self, start, stop):
-        """func of data[start, stop)"""
-        start += self._size
-        stop += self._size
-
-        res_left = res_right = self._default
-        while start < stop:
-            if start & 1:
-                res_left = self._func(res_left, self.data[start])
-                start += 1
-            if stop & 1:
-                stop -= 1
-                res_right = self._func(self.data[stop], res_right)
-            start >>= 1
-            stop >>= 1
-
-        return self._func(res_left, res_right)
-
-    def __repr__(self):
-        return "SegmentTree({0})".format(self.data)
+# @bootstrap
+# def dfs(u, par, g, stack, mx, ans):
+#     added = 0
+#     if not ans[u]:
+#         mx[0] += 1
+#         stack.add(mx[0])
+#         added = mx[0]
+#     ans[u] = ans[u].union(stack)
+#     for v in g[u]:
+#         if v == par: continue
+#         yield dfs(v, u, g, stack, mx, ans)
+#     if added: stack.remove(added)
+#     yield
 
 
+# def dfs(u, vis, g, topo):
+#     vis[u] = True
+#     for v in g[u]:
+#         if not vis[v]:
+#             dfs(v, vis, g, topo)
+#     topo.append(u)
+    
+
+def decode(x):
+    ans = []
+    cnt = 0
+    while x:
+        ans.append(x & 1)
+        x >>= 1
+        cnt += 1
+    val = [i + 1 for i in range(len(ans)) if ans[i]]
+    return len(val), val
+
+
+def dfs(u, pa, vis, g, ans, dep=0):
+    if dep >= 40:
+        return
+    vis[u] = -1
+    for v in g[u]:
+        if v != pa and vis[v] != -1:
+            dfs(v, u, vis, g, ans, dep+1)
+            # ans[u] = ans[u].union(ans[v])
+            ans[u] |= ans[v]   
+    vis[u] = 1 
 
 def main():
-    global dp
     TestCases = 1
     TestCases = int(input())
     
     for _ in range(TestCases):
-        n, k = [int(i) for i in input().split()]
-        arr = [int(i) - 1 for i in input().split()]
-        hot = [int(i) for i in input().split()]
-        cold = [int(i) for i in input().split()]
-
-        if k == 1:
-            print(cold[0] * (n - 1) + hot[0])
-            continue
-
-        # freq = defaultdict(int)
-        # st = 0
-        # for i in arr:
-        #     freq[i] += 1
-        #     st += 1
-        #     if len(freq) > 1:
-        #         break
+        n = int(input())
+        g = [[] for i in range(n)]
+        for i in range(n):
+            s = input()
+            for j in range(n):
+                if s[j] == '1':
+                    # g[i].append(j)
+                    g[j].append(i)
+        # print(g)
         
-        # tasks = list(freq.keys())
-        # if len(tasks) == 1:
-        #     print(cold[tasks[0]] * (n - 1) + hot[tasks[0]])
-        #     continue
+        ans = [1 << i for i in range(n)]
+        vis = [0] * n
+        for i in range(n):
+            if not vis[i]:
+                dfs(i, -1, vis, g, ans)
+ 
 
-        # k1, k2 = tasks
-        # t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
+        for i in range(n):
+            cnt, val = decode(ans[i])
+            print(cnt, *val)
+
+
+
+
+
+
+
+
+# def main():
+#     TestCases = 1
+#     TestCases = int(input())
+    
+#     for _ in range(TestCases):
+#         n = int(input())
+#         g = [[] for i in range(n)]
+#         freq = [0] * n
+#         for i in range(n):
+#             s = input()
+#             for j in range(n):
+#                 if s[j] == '1':
+#                     g[i].append(j)
+#                     # g[j].append(i)
+#                     freq[j] += 1
+#                 # else:
+#                 #     g[j].append(i)
+#                 #     g[i].append(j)
+#                     # freq[] += 1
+
+#         # print(g)
+
+
+
+        # roots = [i for i in range(n) if freq[i] == 0]
+        # g.append(roots)
+        # dis = [0] * (n + 1)
+
+
+        # q = deque([n])
+        # while q:
+        #     u = q.popleft()
+        #     for v in g[u]:
+        #         dis[v] = max(dis[v], dis[u] + 1)
+        #         q.append(v)
         
-        dp = SegmentTree([INF] * k)
-        dp[arr[0]] = hot[arr[0]]
-        prev = arr[0]
-        ans = 0
-        for i in range(1, n):
-            # cur = arr[i]
-            # for i in range(k):
-            #     dp[i] += cold[cur] if cur in [prev, i] else hot[cur]
-            # dp[prev] = min(dp)
-            # prev = cur
-            cur = arr[i]
-            ans += cold[cur] if cur == prev else hot[cur]
-            if prev != cur:
-                dp[cur] += cold[cur] - hot[cur]
-            dp[prev] = dp.query(0, k)
-            prev = cur
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # ans = [[] for i in range(n + 1)]
+        # vis = [False] * (n + 1)
+        # cur = 0
+        # topo = []
+        # dfs(n, vis, g, topo)
+        # topo.reverse()
+        # for i in range(len(topo)):
+        #     u = topo[i]
+        #     ans[u] = range(cur+1, cur + i + 1)
+        # cur += len(topo)
+        
+        # for r in ans[:-1]:
+        #     print(len(r), *r)
 
         
-        print(ans + dp.query(0, k))
+
+
+
+
+        # ans = [{i + 1} for i in range(n)]
+        # vis = [False] * n
+        # for i in range(n):
+        #     if not vis[i]:
+        #         dfs(i, -1, vis, g, ans)
 
 
 
 
 
 
+        # ans = [set() for i in range(n)]
+        # stack = set()
+        # mx = [0]
+        # for i in range(n):
+        #     if ans[i]: continue
+        #     dfs(i, -1, g, stack, mx, ans)
+
+        # for row in ans:
+        #     print(len(row), *list(row))
 
 
-        # emp = [-1, -1]
-        # dp = [emp for _ in range(k)]
-        # dp[k1] = [t0, k2]
-        # dp[k2] = [t0, k1]
-
-        # for ii in range(st, n):
-        #     print(dp)
-        #     cur = arr[ii]
-        #     for i in range(k):
-        #         if dp[i] == emp:
-        #             continue
-        #         k2 = dp[i][1]
-        #         dp[i][0] += cold[cur] if cur in [i, k2] else hot[cur]
-        #         if i != cur:
-        #             dp[i][1] = cur
-        #     if dp[cur] == emp:
-        #         continue
-        #     t, k2 = dp[cur]
-        #     dp[k2] = [t, cur]
-        #     dp[cur] = emp
-        # print(dp)
-
-
-
-
-        # print()
-        # print(k1, t0, k2)
-        # for ii in range(st, n):
-        #     # print(dp)
-        #     cur = arr[ii]
-        #     if dp[cur] != emp:
-        #         dp[cur][0] += cold[cur]
-        #         k2 = dp[cur][1]
-        #         dp[k2] = [dp[cur][0], cur]
-        #         for i in range(k):
-        #             if dp[i] == emp or i == cur or i == k2:
-        #                 continue
-        #             dp[i][0] += hot[cur]
-        #             dp[i][1] = cur
-        #         continue
-        #     dp[cur] = [INF, INF]
-        #     for i in range(k):
-        #         if dp[i] == emp or i == cur:
-        #             continue
-        #         dp[i][0] += hot[cur]
-        #         # k2 = dp[i][1]
-        #         dp[i][1] = cur
-        #         dp[cur] = min(dp[cur], [dp[i][0], i])
         
-        # print(min([i[0] for i in dp if i != emp]))
-        # # print([i[0] for i in dp if i != emp])
-                
 
 
 
 
-
-
+        
         
         
         

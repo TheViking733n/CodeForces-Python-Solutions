@@ -20,63 +20,99 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-INF = int(1e18)
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-class SegmentTree:
+
+class LazySegmentTree:
     def __init__(self, data, default=INF, func=min):
-        """initialize the segment tree with data"""
+        """initialize the lazy segment tree with data"""
         self._default = default
         self._func = func
+
         self._len = len(data)
         self._size = _size = 1 << (self._len - 1).bit_length()
+        self._lazy = [0] * (2 * _size)
 
         self.data = [default] * (2 * _size)
         self.data[_size:_size + self._len] = data
         for i in reversed(range(_size)):
             self.data[i] = func(self.data[i + i], self.data[i + i + 1])
 
-    def __delitem__(self, idx):
-        self[idx] = self._default
-
-    def __getitem__(self, idx):
-        return self.data[idx + self._size]
-
-    def __setitem__(self, idx, value):
-        idx += self._size
-        self.data[idx] = value
-        idx >>= 1
-        while idx:
-            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1])
-            idx >>= 1
-
     def __len__(self):
         return self._len
 
-    def query(self, start, stop):
+    def _push(self, idx):
+        """push query on idx to its children"""
+        # Let the children know of the queries
+        q, self._lazy[idx] = self._lazy[idx], 0
+
+        self._lazy[2 * idx] += q
+        self._lazy[2 * idx + 1] += q
+        self.data[2 * idx] += q
+        self.data[2 * idx + 1] += q
+
+    def _update(self, idx):
+        """updates the node idx to know of all queries applied to it via its ancestors"""
+        for i in reversed(range(1, idx.bit_length())):
+            self._push(idx >> i)
+
+    def _build(self, idx):
+        """make the changes to idx be known to its ancestors"""
+        idx >>= 1
+        while idx:
+            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1]) + self._lazy[idx]
+            idx >>= 1
+
+    def add(self, start, stop, value):
+        """lazily add value to [start, stop)"""
+        start = start_copy = start + self._size
+        stop = stop_copy = stop + self._size
+        while start < stop:
+            if start & 1:
+                self._lazy[start] += value
+                self.data[start] += value
+                start += 1
+            if stop & 1:
+                stop -= 1
+                self._lazy[stop] += value
+                self.data[stop] += value
+            start >>= 1
+            stop >>= 1
+
+        # Tell all nodes above of the updated area of the updates
+        self._build(start_copy)
+        self._build(stop_copy - 1)
+
+    def query(self, start, stop, default=INF):
         """func of data[start, stop)"""
         start += self._size
         stop += self._size
 
-        res_left = res_right = self._default
+        # Apply all the lazily stored queries
+        self._update(start)
+        self._update(stop - 1)
+
+        res = default
         while start < stop:
             if start & 1:
-                res_left = self._func(res_left, self.data[start])
+                res = self._func(res, self.data[start])
                 start += 1
             if stop & 1:
                 stop -= 1
-                res_right = self._func(self.data[stop], res_right)
+                res = self._func(res, self.data[stop])
             start >>= 1
             stop >>= 1
-
-        return self._func(res_left, res_right)
+        return res
 
     def __repr__(self):
-        return "SegmentTree({0})".format(self.data)
+        return "LazySegmentTree({0})".format(self.data)
+
 
 
 
@@ -111,25 +147,30 @@ def main():
         # k1, k2 = tasks
         # t0 = hot[k1] + hot[k2] + (freq[k1] - 1) * cold[k1] + (freq[k2] - 1) * cold[k2] 
         
-        dp = SegmentTree([INF] * k)
-        dp[arr[0]] = hot[arr[0]]
+        dp = [INF] * k
+        seg = LazySegmentTree(dp)
+        # seg[arr[0]] = hot[arr[0]]
+        seg.add(arr[0], arr[0] + 1, hot[arr[0]] - INF)
         prev = arr[0]
-        ans = 0
-        for i in range(1, n):
-            # cur = arr[i]
-            # for i in range(k):
-            #     dp[i] += cold[cur] if cur in [prev, i] else hot[cur]
-            # dp[prev] = min(dp)
-            # prev = cur
-            cur = arr[i]
-            ans += cold[cur] if cur == prev else hot[cur]
-            if prev != cur:
-                dp[cur] += cold[cur] - hot[cur]
-            dp[prev] = dp.query(0, k)
-            prev = cur
 
-        
-        print(ans + dp.query(0, k))
+        for i in range(1, n):
+            cur = arr[i]
+            seg.add(0, k, cold[cur] if cur == prev else hot[cur])
+            if prev != cur:
+                seg.add(cur, cur+1, cold[cur]-hot[cur])
+            # mn = INF
+            # for i in range(k):
+            #     if dp[i] == INF:
+            #         continue
+            #     dp[i] += cold[cur] if cur in [prev, i] else hot[cur]
+            #     mn = min(mn, dp[i])
+            # dp[prev] = mn
+            mn = seg.query(0, k)
+            v = seg.query(prev, prev+1)
+            seg.add(prev, prev + 1, mn - v)
+            prev = cur
+        # print(seg)
+        print(seg.query(0, k))
 
 
 
