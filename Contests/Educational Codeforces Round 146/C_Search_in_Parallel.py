@@ -29,52 +29,33 @@ R = randrange(2, 1 << 32)
 # ========================= Main ==========================
 
 
-fib = [1, 1]
-
-
-def f(w, h, x, y):
-    if w == 1:
-        return 1
-    x = min(x, w - x - 1)
-    w -= h
-    if not (0<=x<w) or not (0<=y<h):
-        return 0
-    return f(h, w, y, x)
-
-def f2(a):
-    if a[0] == 1:
-        return 1
-    a[2] = min(a[2], a[0] - a[2] - 1)
-    a[0] -= a[1]
-    if not (0<=a[2]<a[0]) or not (0<=a[3]<a[1]):
-        return 0
-    a[0],a[1],a[2],a[3]=a[1],a[0],a[3],a[2]
-    return f2(a)
-
 
 def main():
     TestCases = 1
     TestCases = int(input())
-    ans = ["NO", "YES"]
-    for i in range(2, 47):
-        fib.append(fib[i - 1] + fib[i - 2])
     
     for _ in range(TestCases):
-        n, y, x = [int(i) - 1 for i in input().split()]
-        w, h = fib[n + 2], fib[n + 1]
-        # good = 1
-        # while w != 1:
-        #     x = min(x, w - x - 1)
-        #     w -= h
-        #     if not (0<=x<w) or not (0<=y<h):
-        #         good = 0
-        #         break
-        #     w, h, x, y = h, w, y, x
-        print(ans[f2([w, h, x, y])])
+        n, s1, s2 = [int(i) for i in input().split()]
+        # n = int(input())
+        arr = [int(i) for i in input().split()]
+        # s = input()
+        arr = [(arr[i], i+1) for i in range(n)]
+        arr.sort(reverse=True)
 
-        
-
-        
+        cost1 = s1
+        cost2 = s2
+        a = []
+        b = []
+        # print(arr)
+        for time, ball in arr:
+            if cost1 < cost2:
+                a.append(ball)
+                cost1 += s1
+            else:
+                b.append(ball)
+                cost2 += s2
+        print(len(a), *a)
+        print(len(b), *b)
         
         
         

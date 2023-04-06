@@ -28,54 +28,143 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
+def memodict(f):
+    """memoization decorator for a function taking a single argument"""
+    class memodict(dict):
+        def __missing__(self, key):
+            ret = self[key] = f(key)
+            return ret
+    return memodict().__getitem__
+def pollard_rho(n):
+    """returns a random factor of n"""
+    if n & 1 == 0:
+        return 2
+    if n % 3 == 0:
+        return 3
+    s = ((n - 1) & (1 - n)).bit_length() - 1
+    d = n >> s
+    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
+        p = pow(a, d, n)
+        if p == 1 or p == n - 1 or a % n == 0:
+            continue
+        for _ in range(s):
+            prev = p
+            p = (p * p) % n
+            if p == 1:
+                return gcd(prev - 1, n)
+            if p == n - 1:
+                break
+        else:
+            for i in range(2, n):
+                x, y = i, (i * i + 1) % n
+                f = gcd(abs(x - y), n)
+                while f == 1:
+                    x, y = (x * x + 1) % n, (y * y + 1) % n
+                    y = (y * y + 1) % n
+                    f = gcd(abs(x - y), n)
+                if f != n:
+                    return f
+    return n
 
-fib = [1, 1]
+
+@memodict
+def prime_factors(n):
+    """returns a Counter of the prime factorization of n"""
+    if n <= 1:
+        return Counter()
+    f = pollard_rho(n)
+    return Counter([n]) if f == n else prime_factors(f) + prime_factors(n // f)
 
 
-def f(w, h, x, y):
-    if w == 1:
-        return 1
-    x = min(x, w - x - 1)
-    w -= h
-    if not (0<=x<w) or not (0<=y<h):
-        return 0
-    return f(h, w, y, x)
+def distinct_factors(n):
+    """returns a list of all distinct factors of n"""
+    factors = [1]
+    for p, exp in prime_factors(n).items():
+        factors += [p**i * factor for factor in factors for i in range(1, exp + 1)]
+    return factors
 
-def f2(a):
-    if a[0] == 1:
-        return 1
-    a[2] = min(a[2], a[0] - a[2] - 1)
-    a[0] -= a[1]
-    if not (0<=a[2]<a[0]) or not (0<=a[3]<a[1]):
-        return 0
-    a[0],a[1],a[2],a[3]=a[1],a[0],a[3],a[2]
-    return f2(a)
+
+def all_factors(n):
+    """returns a sorted list of all distinct factors of n"""
+    small, large = [], []
+    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
+        if not n % i:
+            small.append(i)
+            large.append(n // i)
+    if small[-1] == large[-1]:
+        large.pop()
+    large.reverse()
+    small.extend(large)
+    return small
+
+
+
 
 
 def main():
     TestCases = 1
     TestCases = int(input())
-    ans = ["NO", "YES"]
-    for i in range(2, 47):
-        fib.append(fib[i - 1] + fib[i - 2])
     
+    def solve(x):
+        fac = all_factors(x)
+        # sm = (INF, 0, 0)
+        arr = []
+        for f in fac:
+            other = x//f
+            # sm = min(sm, (f+other, f, other))
+            arr.append((f+other, f, other))
+            if f > other:
+                break
+        # if not arr:
+        #     arr.append((2, 1, 1))
+        # print(arr)
+        arr.sort()
+        return [(x, y) for _, x, y in arr]
+
+    # mn = -INF
+    # for i in range(int(1e8+1e4), int(1e8+2e4)):
+    #     mn = max(mn, len(solve(i)))
+    # print(mn)
+    # return
+    def ceil1(p, q):
+        return (p + q - 1) // q
     for _ in range(TestCases):
-        n, y, x = [int(i) - 1 for i in input().split()]
-        w, h = fib[n + 2], fib[n + 1]
-        # good = 1
-        # while w != 1:
-        #     x = min(x, w - x - 1)
-        #     w -= h
-        #     if not (0<=x<w) or not (0<=y<h):
-        #         good = 0
-        #         break
-        #     w, h, x, y = h, w, y, x
-        print(ans[f2([w, h, x, y])])
+        a, b = [int(i) for i in input().split()]
+        # fac1 = solve(a)
+        # fac2 = solve(b)
+        # print(fac1)
+        a, b = sorted([a, b])
+        maxm = int((a+b) ** .5)
+        # sq = int((a + b) ** .5)
+        ans = INF
+        # for i in range(max(1, sq - 25), sq + 25):
+        for i in range(1, maxm + 50):
+            ans = min(ans, ceil1(a, i) + ceil1(b, i) + i - 1)
+        print(ans)
+
+
+
+
+
+
+        # ans = INF
+        # for x1, y1 in fac1:
+        #     for x2, y2 in fac2:
+        #         ans = min(ans, max(x1, x2) + y1 + y2 - 1)
+        # fac1, fac2 = fac2, fac1
+        # for x1, y1 in fac1:
+        #     for x2, y2 in fac2:
+        #         ans = min(ans, max(x1, x2) + y1 + y2 - 1)
+        # print(ans)
+
+
+
+
+
+
 
         
 
-        
-        
         
         
         

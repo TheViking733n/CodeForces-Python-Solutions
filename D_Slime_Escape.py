@@ -70,7 +70,7 @@ def main():
 
         left = arr[:k]
         right = arr[k+1:][::-1]
-        print(left, start, right[::-1])
+        # print(left, start, right[::-1])
         
         cur = start
         if left and left[-1] >= 0:
@@ -88,25 +88,35 @@ def main():
         f = 1
         i  = j = 0
         left.reverse(); right.reverse()
+        cnt = 0
         while i < len(left) and j < len(right):
+            # cnt += 1
+            # if cnt > 20:
+            #     break
+            # print(i, j, cur)
             bal1 = bal2 = cur; i1 = i; j1 = j
             while i < len(left) and bal1 + left[i] >= 0:
                 bal1 += left[i]
                 i += 1
+                if bal1 >= cur:
+                    break
             while j < len(right) and bal2 + right[j] >= 0:
                 bal2 += right[j]
                 j += 1
+                if bal2 >= cur:
+                    break
             if i >= len(left) or j >= len(right):
                 break
-            if bal1 < cur and bal2 < cur:
+            if bal1 <= cur and bal2 <= cur:
                 f = 0
                 break
-            if bal1 > bal2:
+            if bal1 >= cur:
                 cur = bal1
                 i = i1
-            else:
+            if bal2 >= cur:
                 cur = bal2
                 j = j1
+        print("YES" if f else "NO")
 
 
             
