@@ -19,7 +19,7 @@ from collections import deque, Counter, defaultdict
 
 
 M=1000000007
-# M=998244353
+M=998244353
 # INF = float("inf")
 INF = 9223372036854775807
 PI = 3.141592653589793
@@ -28,172 +28,152 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
+def memodict(f):
+    """memoization decorator for a function taking a single argument"""
+    class memodict(dict):
+        def __missing__(self, key):
+            ret = self[key] = f(key)
+            return ret
+    return memodict().__getitem__
+def pollard_rho(n):
+    """returns a random factor of n"""
+    if n & 1 == 0:
+        return 2
+    if n % 3 == 0:
+        return 3
+    s = ((n - 1) & (1 - n)).bit_length() - 1
+    d = n >> s
+    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
+        p = pow(a, d, n)
+        if p == 1 or p == n - 1 or a % n == 0:
+            continue
+        for _ in range(s):
+            prev = p
+            p = (p * p) % n
+            if p == 1:
+                return gcd(prev - 1, n)
+            if p == n - 1:
+                break
+        else:
+            for i in range(2, n):
+                x, y = i, (i * i + 1) % n
+                f = gcd(abs(x - y), n)
+                while f == 1:
+                    x, y = (x * x + 1) % n, (y * y + 1) % n
+                    y = (y * y + 1) % n
+                    f = gcd(abs(x - y), n)
+                if f != n:
+                    return f
+    return n
+
+
+@memodict
+def prime_factors(n):
+    """returns a Counter of the prime factorization of n"""
+    if n <= 1:
+        return Counter()
+    f = pollard_rho(n)
+    return Counter([n]) if f == n else prime_factors(f) + prime_factors(n // f)
+
+
+def distinct_factors(n):
+    """returns a list of all distinct factors of n"""
+    factors = [1]
+    for p, exp in prime_factors(n).items():
+        factors += [p**i * factor for factor in factors for i in range(1, exp + 1)]
+    return factors
+
+
+def all_factors(n):
+    """returns a sorted list of all distinct factors of n"""
+    small, large = [], []
+    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
+        if not n % i:
+            small.append(i)
+            large.append(n // i)
+    if small[-1] == large[-1]:
+        large.pop()
+    large.reverse()
+    small.extend(large)
+    return small
+
+
+
+def popcnt(x):
+    x -= (x >> 1) & 0x5555555555555555
+    x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333)
+    x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0f
+    x += x >> 8
+    x += x >> 16
+    x += x >> 32
+    return x & 0x7f
+
+
+def divisible_cnt(primes, n):
+    # Note: Handle the below base case manually
+    if n == 1 or len(primes) == 0:
+        return 0
+    cnt = 0
+    for i in range(1, 1 << len(primes)):
+        prod = 1
+        for j in range(len(primes)):
+            if i & (1 << j):
+                prod *= primes[j]
+        if bin(i).count('1') & 1:
+            cnt += n // prod
+        else:
+            cnt -= n // prod
+    return cnt
 
 def main():
     TestCases = 1
     TestCases = int(input())
-    wrongTestCase = TestCases == 0
     
-    for ii in range(TestCases):
-        n, k = [int(i) for i in input().split()]
+   
+    for _ in range(TestCases):
+        n, m = [int(i) for i in input().split()]
         # n = int(input())
         arr = [int(i) for i in input().split()]
-        if wrongTestCase:
-            if ii == 46:
-                print(n, k)
-                print(arr)
-            continue
         # s = input()
-        k -= 1
-        if k == 0 or k == n - 1:
-            print("YES")
-            continue
-        # arr = [(arr[i], i) for i in range(n)]
-        # a2 = []
-        # newk = -1
-        # start = 0
-        # for val, idx in arr:
-        #     if idx == k:
-        #         start = val
-        #         newk = len(a2)
-        #         a2.append(0)
-        #         continue
-        #     if val == 0:
-        #         continue
-        #     if not a2:
-        #         a2.append(val)
-        #     elif a2[-1] * val <= 0:
-        #         a2.append(val)
-        #     else:
-        #         a2[-1] += val
-        # # print(a2)
-        # if len(a2) <= 1:
-        #     print("YES")
-        #     continue
-        # arr = a2
-        # n = len(arr)
-        # k = newk
-
-        left = arr[:k]
-        right = arr[k+1:][::-1]
-        # print(left, start, right[::-1])
+        f = 1
+        for i in range(n-1):
+            if arr[i] % arr[i+1] != 0:
+                f = 0
+                break
         
-        start = cur = arr[k]
-        # if left and left[-1] >= 0:
-        #     cur += left.pop()
-        # if right and right[-1] >= 0:
-        #     cur += right.pop()
-        # if left and left[0] >= 0:
-        #     left.pop(0)
-        # if right and right[0] >= 0:
-        #     right.pop(0)
-        
-        if not (left and right):
-            print("YES")
+        if not f:
+            print(0)
             continue
-        left.reverse(); right.reverse()
-        # print(left[::-1], start, right)
 
-        req1, ps1, pmax1, sm = [], [], [], 0
-        for val in left:
-            sm += val
-            ps1.append(sm)
-            req1.append(-sm if not req1 else max(req1[-1], -sm))
-            pmax1.append(max(0, sm) if not pmax1 else max(pmax1[-1], sm))
-        # print(left, req1, pmax1)
+        ans = 1
+        prev = prime_factors(arr[0])
+        for i in range(1, n):
+            cur = prime_factors(arr[i])
+            if arr[i - 1] == 1:
+                ans *= m
+                ans %= M
+                prev = cur
+                continue
 
-        req2, ps2, pmax2, sm = [], [], [], 0
-        for val in right:
-            sm += val
-            ps2.append(sm)
-            req2.append(-sm if not req2 else max(req2[-1], -sm))
-            pmax2.append(max(0, sm) if not pmax2 else max(pmax2[-1], sm))
-        # print(right, req2, pmax2)
-
-        f = 0
-        i  = j = 0
-        leftprofit = rightprofit = start
-        # print()
-
-        while i < len(left) or j < len(right):
-            # print(leftprofit, req2)
-            if leftprofit >= req2[-1]:
-                f = 1
-                break
-            # print(i, j, leftprofit)
-            deltaleftprofit = deltarightprofit = 0
-
-            # Check how far can I go in right using leftprofit
-            idx = bisect_right(req2, leftprofit) - 1
-            # if idx == len(req2) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newrightprofit = start + pmax2[idx]
-                deltarightprofit = newrightprofit - rightprofit
-                rightprofit = newrightprofit
-            # print(rightprofit, req1)
-            if rightprofit >= req1[-1]:
-                f = 1
-                break
-            # Check how far can I go in left using rightprofit
-            # print(i, j, rightprofit)
-            idx = bisect_right(req1, rightprofit) - 1
-            # if idx == len(req1) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newleftprofit = start + pmax1[idx]
-                deltaleftprofit = newleftprofit - leftprofit
-                leftprofit = newleftprofit
-            
-            if deltaleftprofit == 0 and deltarightprofit == 0:
-                break
-
-
-
-
-        print("YES" if f else "NO")
-
-
-
-        # cnt = 0
-        # while i < len(left) and j < len(right):
-        #     # cnt += 1
-        #     # if cnt > 20:
-        #     #     break
-        #     # print(i, j, cur)
-        #     bal1 = bal2 = cur; i1 = i; j1 = j
-        #     while i < len(left) and bal1 + left[i] >= 0:
-        #         bal1 += left[i]
-        #         i += 1
-        #         if bal1 >= cur:
-        #             break
-        #     while j < len(right) and bal2 + right[j] >= 0:
-        #         bal2 += right[j]
-        #         j += 1
-        #         if bal2 >= cur:
-        #             break
-        #     if i >= len(left) or j >= len(right):
-        #         break
-        #     if bal1 <= cur and bal2 <= cur:
-        #         f = 0
-        #         break
-        #     if bal1 >= cur:
-        #         cur = bal1
-        #         i = i1
-        #     if bal2 >= cur:
-        #         cur = bal2
-        #         j = j1
-        # print("YES" if f else "NO")
-
+            pfac = []
+            prod = arr[i]
+            for p in prev:
+                if prev[p] > cur[p]:
+                    pfac.append(p)
+                    # prod *= p ** cur[p]
+                    # prod //= p ** cur[p]
 
             
+            left = m // prod
+            ans *= left - divisible_cnt(pfac, left)
+            ans %= M
+
+            prev = cur
+        
+        print(ans)
 
 
-
-
-
+        
         
         
         

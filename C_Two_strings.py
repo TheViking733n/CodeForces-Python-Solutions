@@ -29,171 +29,46 @@ R = randrange(2, 1 << 32)
 # ========================= Main ==========================
 
 
+INF = 1000
 def main():
     TestCases = 1
-    TestCases = int(input())
-    wrongTestCase = TestCases == 0
     
-    for ii in range(TestCases):
-        n, k = [int(i) for i in input().split()]
-        # n = int(input())
-        arr = [int(i) for i in input().split()]
-        if wrongTestCase:
-            if ii == 46:
-                print(n, k)
-                print(arr)
+    for _ in range(TestCases):
+        s, t = input(), input()
+        n, m = len(s), len(t)
+        match = [INF] * n
+        i = j = 0
+        while i < n:
+            match[i] = j
+            if j < m and s[i] == t[j]:
+                j += 1
+            i += 1
+        # print(match)
+        ans = (j, j, 0)
+        i, j = n - 1, m - 1
+        cnt = 0
+        while i >= 0 and j >= 0:
+            if s[i] == t[j]:
+                cnt += 1
+                # leftmatches = min(match[i], i-1)
+                ans = max(ans, (match[i] + cnt, match[i], cnt))
+                j -= 1
+            i -= 1
+        tot, st, en = ans
+        # print(ans)
+        if tot > m:
+            print(t)
             continue
-        # s = input()
-        k -= 1
-        if k == 0 or k == n - 1:
-            print("YES")
-            continue
-        # arr = [(arr[i], i) for i in range(n)]
-        # a2 = []
-        # newk = -1
-        # start = 0
-        # for val, idx in arr:
-        #     if idx == k:
-        #         start = val
-        #         newk = len(a2)
-        #         a2.append(0)
-        #         continue
-        #     if val == 0:
-        #         continue
-        #     if not a2:
-        #         a2.append(val)
-        #     elif a2[-1] * val <= 0:
-        #         a2.append(val)
-        #     else:
-        #         a2[-1] += val
-        # # print(a2)
-        # if len(a2) <= 1:
-        #     print("YES")
-        #     continue
-        # arr = a2
-        # n = len(arr)
-        # k = newk
+        ans = t[:st] + t[m-en:]
+        if not ans:
+            print('-')
+        else:
+            print(ans)
 
-        left = arr[:k]
-        right = arr[k+1:][::-1]
-        # print(left, start, right[::-1])
+
+
+
         
-        start = cur = arr[k]
-        # if left and left[-1] >= 0:
-        #     cur += left.pop()
-        # if right and right[-1] >= 0:
-        #     cur += right.pop()
-        # if left and left[0] >= 0:
-        #     left.pop(0)
-        # if right and right[0] >= 0:
-        #     right.pop(0)
-        
-        if not (left and right):
-            print("YES")
-            continue
-        left.reverse(); right.reverse()
-        # print(left[::-1], start, right)
-
-        req1, ps1, pmax1, sm = [], [], [], 0
-        for val in left:
-            sm += val
-            ps1.append(sm)
-            req1.append(-sm if not req1 else max(req1[-1], -sm))
-            pmax1.append(max(0, sm) if not pmax1 else max(pmax1[-1], sm))
-        # print(left, req1, pmax1)
-
-        req2, ps2, pmax2, sm = [], [], [], 0
-        for val in right:
-            sm += val
-            ps2.append(sm)
-            req2.append(-sm if not req2 else max(req2[-1], -sm))
-            pmax2.append(max(0, sm) if not pmax2 else max(pmax2[-1], sm))
-        # print(right, req2, pmax2)
-
-        f = 0
-        i  = j = 0
-        leftprofit = rightprofit = start
-        # print()
-
-        while i < len(left) or j < len(right):
-            # print(leftprofit, req2)
-            if leftprofit >= req2[-1]:
-                f = 1
-                break
-            # print(i, j, leftprofit)
-            deltaleftprofit = deltarightprofit = 0
-
-            # Check how far can I go in right using leftprofit
-            idx = bisect_right(req2, leftprofit) - 1
-            # if idx == len(req2) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newrightprofit = start + pmax2[idx]
-                deltarightprofit = newrightprofit - rightprofit
-                rightprofit = newrightprofit
-            # print(rightprofit, req1)
-            if rightprofit >= req1[-1]:
-                f = 1
-                break
-            # Check how far can I go in left using rightprofit
-            # print(i, j, rightprofit)
-            idx = bisect_right(req1, rightprofit) - 1
-            # if idx == len(req1) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newleftprofit = start + pmax1[idx]
-                deltaleftprofit = newleftprofit - leftprofit
-                leftprofit = newleftprofit
-            
-            if deltaleftprofit == 0 and deltarightprofit == 0:
-                break
-
-
-
-
-        print("YES" if f else "NO")
-
-
-
-        # cnt = 0
-        # while i < len(left) and j < len(right):
-        #     # cnt += 1
-        #     # if cnt > 20:
-        #     #     break
-        #     # print(i, j, cur)
-        #     bal1 = bal2 = cur; i1 = i; j1 = j
-        #     while i < len(left) and bal1 + left[i] >= 0:
-        #         bal1 += left[i]
-        #         i += 1
-        #         if bal1 >= cur:
-        #             break
-        #     while j < len(right) and bal2 + right[j] >= 0:
-        #         bal2 += right[j]
-        #         j += 1
-        #         if bal2 >= cur:
-        #             break
-        #     if i >= len(left) or j >= len(right):
-        #         break
-        #     if bal1 <= cur and bal2 <= cur:
-        #         f = 0
-        #         break
-        #     if bal1 >= cur:
-        #         cur = bal1
-        #         i = i1
-        #     if bal2 >= cur:
-        #         cur = bal2
-        #         j = j1
-        # print("YES" if f else "NO")
-
-
-            
-
-
-
-
-
         
         
         

@@ -28,172 +28,149 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
+class SegmentTree:
+    def __init__(self, data, default=0, func=lambda x, y: x + y):
+        """initialize the segment tree with data"""
+        self._default = default
+        self._func = func
+        self._len = len(data)
+        self._size = _size = 1 << (self._len - 1).bit_length()
+
+        self.data = [default] * (2 * _size)
+        self.data[_size:_size + self._len] = data
+        for i in reversed(range(_size)):
+            self.data[i] = func(self.data[i + i], self.data[i + i + 1])
+
+    def __delitem__(self, idx):
+        self[idx] = self._default
+
+    def __getitem__(self, idx):
+        return self.data[idx + self._size]
+
+    def __setitem__(self, idx, value):
+        idx += self._size
+        self.data[idx] = value
+        idx >>= 1
+        while idx:
+            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1])
+            idx >>= 1
+
+    def __len__(self):
+        return self._len
+
+    def query(self, start, stop):
+        """func of data[start, stop)"""
+        start += self._size
+        stop += self._size
+
+        res_left = res_right = self._default
+        while start < stop:
+            if start & 1:
+                res_left = self._func(res_left, self.data[start])
+                start += 1
+            if stop & 1:
+                stop -= 1
+                res_right = self._func(self.data[stop], res_right)
+            start >>= 1
+            stop >>= 1
+
+        return self._func(res_left, res_right)
+
+    def __repr__(self):
+        return "SegmentTree({0})".format(self.data)
+
+
+from types import GeneratorType
+def bootstrap(f, stack=[]):
+    def wrappedfunc(*args, **kwargs):
+        if stack:
+            return f(*args, **kwargs)
+        else:
+            to = f(*args, **kwargs)
+            while True:
+                if type(to) is GeneratorType:
+                    stack.append(to)
+                    to = next(to)
+                else:
+                    stack.pop()
+                    if not stack:
+                        break
+                    to = stack[-1].send(to)
+            return to
+    return wrappedfunc
+
+@bootstrap
+def dfs(u, par, g, level, dfsarr, ind, parent):
+    ind[u] = [level, len(dfsarr[level]), -1]
+    dfsarr[level].append(u)
+    parent[u] = par
+    for v in g[u]:
+        if v != par:
+            yield dfs(v, u, g, level ^ 1, dfsarr, ind, parent)
+    ind[u][2] = len(dfsarr[level])
+    yield
+
+
+def dfs(u, par, g, dfsarr, ind):
+    ind[u] = [len(dfsarr), -1] # ind[u][0] is the discovery time of u
+    dfsarr.append(u)
+    for v in g[u]:
+        if v != par:
+            dfs(v, u, g, dfsarr, ind)
+    ind[u][1] = len(dfsarr)
+    # ind[u][1] is the finishing time of u, 
+    # i.e. (ind[u][1] - 1) is the last node visited in the subtree of u
+    
 
 def main():
     TestCases = 1
-    TestCases = int(input())
-    wrongTestCase = TestCases == 0
     
-    for ii in range(TestCases):
-        n, k = [int(i) for i in input().split()]
-        # n = int(input())
+    for _ in range(TestCases):
+        n, qq = [int(i) for i in input().split()]
         arr = [int(i) for i in input().split()]
-        if wrongTestCase:
-            if ii == 46:
-                print(n, k)
-                print(arr)
-            continue
-        # s = input()
-        k -= 1
-        if k == 0 or k == n - 1:
-            print("YES")
-            continue
-        # arr = [(arr[i], i) for i in range(n)]
-        # a2 = []
-        # newk = -1
-        # start = 0
-        # for val, idx in arr:
-        #     if idx == k:
-        #         start = val
-        #         newk = len(a2)
-        #         a2.append(0)
-        #         continue
-        #     if val == 0:
-        #         continue
-        #     if not a2:
-        #         a2.append(val)
-        #     elif a2[-1] * val <= 0:
-        #         a2.append(val)
-        #     else:
-        #         a2[-1] += val
-        # # print(a2)
-        # if len(a2) <= 1:
-        #     print("YES")
-        #     continue
-        # arr = a2
-        # n = len(arr)
-        # k = newk
-
-        left = arr[:k]
-        right = arr[k+1:][::-1]
-        # print(left, start, right[::-1])
+        g = [[] for i in range(n)]
+        for _ in range(n-1):
+            u, v = [int(i) - 1 for i in input().split()]
+            g[u].append(v)
+            g[v].append(u)
         
-        start = cur = arr[k]
-        # if left and left[-1] >= 0:
-        #     cur += left.pop()
-        # if right and right[-1] >= 0:
-        #     cur += right.pop()
-        # if left and left[0] >= 0:
-        #     left.pop(0)
-        # if right and right[0] >= 0:
-        #     right.pop(0)
+        dfsarr = [[], []]
+        parent = [-1] * n
+        ind = [[-1, -1, -1]] * n
+        dfs(0, -1, g, 0, dfsarr, ind, parent)
+        # print(dfsarr)
+        # print(ind)
+
+        seg = [SegmentTree([0] * (len(i) + 1)) for i in dfsarr]
+
+        for q in range(qq):
+            que = [int(i) for i in input().split()]
+            if que[0] == 1:
+                _, x, val = que; x -= 1
+                level, st, en = ind[x]
+                seg[level][st] += val
+                seg[level][en] -= val
+                for child in g[x]:
+                    if child == parent[x]:
+                        continue
+                    level, st, en = ind[child]
+                    seg[level][st] -= val
+                    seg[level][en] += val
+                # for node in range(n):
+                #     level, st, en = ind[node]
+                #     print(seg[level].query(0, st + 1), end = ' ')
+                # print()
+
+            else:
+                _, x = que; x -= 1
+                level, st, en = ind[x]
+                print(seg[level].query(0, st + 1) + arr[x])
+
+
         
-        if not (left and right):
-            print("YES")
-            continue
-        left.reverse(); right.reverse()
-        # print(left[::-1], start, right)
-
-        req1, ps1, pmax1, sm = [], [], [], 0
-        for val in left:
-            sm += val
-            ps1.append(sm)
-            req1.append(-sm if not req1 else max(req1[-1], -sm))
-            pmax1.append(max(0, sm) if not pmax1 else max(pmax1[-1], sm))
-        # print(left, req1, pmax1)
-
-        req2, ps2, pmax2, sm = [], [], [], 0
-        for val in right:
-            sm += val
-            ps2.append(sm)
-            req2.append(-sm if not req2 else max(req2[-1], -sm))
-            pmax2.append(max(0, sm) if not pmax2 else max(pmax2[-1], sm))
-        # print(right, req2, pmax2)
-
-        f = 0
-        i  = j = 0
-        leftprofit = rightprofit = start
-        # print()
-
-        while i < len(left) or j < len(right):
-            # print(leftprofit, req2)
-            if leftprofit >= req2[-1]:
-                f = 1
-                break
-            # print(i, j, leftprofit)
-            deltaleftprofit = deltarightprofit = 0
-
-            # Check how far can I go in right using leftprofit
-            idx = bisect_right(req2, leftprofit) - 1
-            # if idx == len(req2) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newrightprofit = start + pmax2[idx]
-                deltarightprofit = newrightprofit - rightprofit
-                rightprofit = newrightprofit
-            # print(rightprofit, req1)
-            if rightprofit >= req1[-1]:
-                f = 1
-                break
-            # Check how far can I go in left using rightprofit
-            # print(i, j, rightprofit)
-            idx = bisect_right(req1, rightprofit) - 1
-            # if idx == len(req1) - 1:
-            #     f = 1
-            #     break
-            if idx >= 0:
-                newleftprofit = start + pmax1[idx]
-                deltaleftprofit = newleftprofit - leftprofit
-                leftprofit = newleftprofit
-            
-            if deltaleftprofit == 0 and deltarightprofit == 0:
-                break
 
 
-
-
-        print("YES" if f else "NO")
-
-
-
-        # cnt = 0
-        # while i < len(left) and j < len(right):
-        #     # cnt += 1
-        #     # if cnt > 20:
-        #     #     break
-        #     # print(i, j, cur)
-        #     bal1 = bal2 = cur; i1 = i; j1 = j
-        #     while i < len(left) and bal1 + left[i] >= 0:
-        #         bal1 += left[i]
-        #         i += 1
-        #         if bal1 >= cur:
-        #             break
-        #     while j < len(right) and bal2 + right[j] >= 0:
-        #         bal2 += right[j]
-        #         j += 1
-        #         if bal2 >= cur:
-        #             break
-        #     if i >= len(left) or j >= len(right):
-        #         break
-        #     if bal1 <= cur and bal2 <= cur:
-        #         f = 0
-        #         break
-        #     if bal1 >= cur:
-        #         cur = bal1
-        #         i = i1
-        #     if bal2 >= cur:
-        #         cur = bal2
-        #         j = j1
-        # print("YES" if f else "NO")
-
-
-            
-
-
-
-
-
+        
         
         
         
