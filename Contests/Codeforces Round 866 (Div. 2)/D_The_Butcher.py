@@ -28,177 +28,189 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-# def f(a, b, bit):
-#     if bit <= -1: return 0, 0
-#     n = len(a)
-#     if n == 0: return 0, 0
-#     a0, a1, b0, b1 = [], [], [], []
-#     for i in range(n):
-#         if a[i] & (1 << bit): a1.append(a[i])
-#         else: a0.append(a[i])
-#         if b[i] & (1 << bit): b1.append(b[i])
-#         else: b0.append(b[i])
+def solve(w1, h1, i, j, w, h, pair, used, cnt, ans):
+    n = len(w)
+    if cnt == n:
+        ans.add((w1, h1))
+        return
     
-#     x = (1 << bit) - 1
-#     # ans1, ans2 = f([i & x for i in a], [i & x for i in b], bit - 1)
-#     ans1, ans2 = f(a, b, bit - 1)
-#     if len(a0) != len(b1):
-#         return ans1, ans2
+    i1, j1 = i, j
+
+    while i1 < n and used[w[i1][2]]:
+        i1 += 1
+    if i1 < n and w[i1][0] == w1:
+        x, y, idx = w[i1]
+        # x, y = pair[idx]
+        used[idx] = True
+        solve(w1, h1 + y, i1, j, w, h, pair, used, cnt + 1, ans)
+        used[idx] = False
     
-#     if not a0:
-#         return (1 << bit) | f(a1, b1, bit - 1)[0], ans1
-#     if len(a0) == len(b1):
-#         u1, u2 = f(a0, b1, bit - 1)
-#         v1, v2 = f(a1, b0, bit - 1)
-#         ans2 = ans1
-#         if a0 and a1:
-#             ans1 = (1 << bit) | max([u1 & v1, u1 & v2, u2 & v1, u2 & v2])
-#         elif a0:
-#             ans1 = (1 << bit) | u1
-#         else:
-#             ans1 = (1 << bit) | v1
-
-#     return ans1, ans2
-
-
-# def f(a, b, bit):
-#     n = len(a)
-#     if n == 0:
-#         return 0
-#     if bit <= 0:
-#         # print(a, b)
-#         # a = sorted(a)
-#         # b = sorted(b, reverse=True)
-#         x = a[0] ^ b[0]
-#         for i in range(1, n):
-#             x &= a[i] ^ b[i]
-#         return x
-#         # return 0
+    while j1 < n and used[h[j1][2]]:
+        j1 += 1
+    if j1 < n and h[j1][0] == h1:
+        x, y, idx = h[j1]
+        # x, y = pair[idx]
+        used[idx] = True
+        solve(w1 + x, h1, i, j1, w, h, pair, used, cnt + 1, ans)
+        used[idx] = False
     
-#     a0, a1, b0, b1 = [], [], [], []
-#     for i in range(n):
-#         if a[i] & (1 << bit): a1.append(a[i])
-#         else: a0.append(a[i])
-#         if b[i] & (1 << bit): b1.append(b[i])
-#         else: b0.append(b[i])
-#     # print(bit, a0, a1, b0, b1)
-#     if len(a0) != len(b1):
-#         x = (1 << bit) - 1
-#         # return f([i & x for i in a], [i & x for i in b], bit - 1)
-#         return f(a, b, bit - 1)
+    return
 
-#     if not a1:
-#         return f(a0, b1, bit - 1)
-
-#     if not a0:
-#         return f(a1, b0, bit - 1)
-
-#     return max([f(a0, b1, i) & f(a1, b0, i) for i in range(-1, bit)])
-#     # ans = 0
-#     # for i in range(bit - 1, -1, -1):
-#     #     ans = f(a0, b1, i) & f(a1, b0, i)
-#     #     if ans & (1 << i):
-#     #         break
-#     # if not ans:
-#     #     ans = f(a0, b1, -1) & f(a1, b0, -1)
-#     # return ans
-
-
-
-# def f(a, b, bit):
-#     n = len(a)
-#     a0, a1, b0, b1 = [], [], [], []
-#     for i in range(n):
-#         if a[i] & (1 << bit): a1.append(a[i])
-#         else: a0.append(a[i])
-#         if b[i] & (1 << bit): b1.append(b[i])
-#         else: b0.append(b[i])
-    
-#     if bit <= 0:
-#         return int(len(a0) == len(b1))
-    
-#     if len(a0) != len(b1) or not a0 or not a1:
-#         x = (1 << bit) - 1
-#         return f([i & x for i in a], [i & x for i in b], bit - 1)
-    
-#     ans = 0
-#     for j in range(bit):
-#         x = (1 << (j+1)) - 1
-#         ans = max(ans,
-#             f([i & x for i in a0], [i & x for i in b1], j) & 
-#             f([i & x for i in a1], [i & x for i in b0], j)
-#         )
-
-#     return (1 << bit) | ans
 
 
 def main():
     TestCases = 1
     TestCases = int(input())
-    test2 = TestCases == 10000
     
-    for test in range(TestCases):
+    for _ in range(TestCases):
         # n, k = [int(i) for i in input().split()]
         n = int(input())
-        a = [int(i) for i in input().split()]
-        b = [int(i) for i in input().split()]
+        area = 0
+        w, h = [], []
+        pair = []
+        for i in range(n):
+            x, y = [int(i) for i in input().split()]
+            w.append((x, y, i))
+            h.append((y, x, i))
+            # pair.append((x, y))
+            # area += x * y
 
-        groups = [[a, b]]
-        for bit in range(30, -1, -1):
-            ok = True
-            newgroups = []
-            for a, b in groups:
-                a0, a1, b0, b1 = [], [], [], []
-                for i in a:
-                    if (i >> bit) & 1: a1.append(i)
-                    else: a0.append(i)
-                for i in b:
-                    if (i >> bit) & 1: b1.append(i)
-                    else: b0.append(i)
+        w.sort()
+        h.sort()
+        print(sorted(w))
+        ans = set()
+
+        used = [False] * n
+        for idx in range(n):
+            w1, h1, idx = w[idx]
+            used[idx] = True
+            solve(w1, h1, 0, 0, w, h, pair, used, 1, ans)
+            used[idx] = False
+
+
+        # used = [False] * n
+        # w1, h1, idx = w[0]
+        # # w1, h1 = pair[idx]
+        # used[idx] = True
+
+        # solve(w1, h1, 0, 0, w, h, pair, used, 1, ans)
+        # w, h = h, w
+        # # pair = [(y, x) for x, y in pair]
+        
+        # used = [False] * n
+        # w1, h1, idx = w[0]
+        # # w1, h1 = pair[idx]
+        # used[idx] = True
+        # solve(w1, h1, 0, 0, w, h, pair, used, 1, ans)
+
+
+
+        print(len(ans))
+        for row in ans:
+            print(*row)
+
+        # for ii in range(2):
+
+        #     used = [False] * n
+        #     w1, idx = w[0]
+        #     w1, h1 = pair[idx]
+        #     used[idx] = True
+        #     cnt = 1
+        #     stack = [(w1, h1)]
+        #     i = j = 0
+        #     while not stack:
+        #         w1, h1 = stack.pop()
+        #         while i < n and used[w[i][1]]:
+        #             i += 1
+        #         if i >= n:
+        #             break
+        #         if w[i][0] == w1:
+        #             idx = w[i][1]
+        #             x, y = pair[idx]
+        #             h1 += y
+        #             used[idx] = True
+        #             cnt += 1
+
+        #         while j < n and used[h[j][1]]:
+        #             j += 1
+        #         if j >= n:
+        #             break
+        #         if h[j][0] == h1:
+        #             idx = h[j][1]
+        #             x, y = pair[idx]
+        #             w1 += x
+        #             used[idx] = True
+        #             cnt += 1
                 
-                if len(a0) != len(b1):
-                    ok = False
-                    break
-
-                if a0:
-                    newgroups.append([a0, b1])
-                if a1:
-                    newgroups.append([a1, b0])
+        #         stack.append((w1, h1))
+                
             
-            if ok:
-                groups = newgroups
+            
+        #     if cnt == n:
+        #         if ii & 1:
+        #             ans.add((h1, w1))
+        #         else:
+        #             ans.add((w1, h1))
+            
+        #     w, h = h, w
+        #     pair = [(y, x) for x, y in pair]
         
-        ans = (1 << 31) - 1
-        for a, b in groups:
-            for i in range(len(a)):
-                ans &= a[i] ^ b[i]
+        # print(len(ans))
+        # for row in ans:
+        #     print(*row)
+
         
-        print(ans)
+
+
+
+
+
+
+
+
+
+
+
+        # fac = all_factors(area)
+        # ans = []
+        # for a in fac:
+        #     b = area // a
+        #     used = [False] * n
+        #     cnt = 0
+        #     for i in range(n):
+        #         i = j = 0
+        #         while i < n and not used[i]:
+        #             i += 1
+        #         while j < n and not used[j]:
+        #             j += 1
+        #         a1, b1 = a, b
+        #         try:
+        #             if w[i][0] == a1:
+        #                 idx = w[i][1]
+        #                 x, y = pair[idx]
+        #                 b1 -= y
+        #                 used[idx] = True
+        #                 cnt += 1
+        #             elif h[j][0] == b1:
+        #                 idx = h[j][1]
+        #                 x, y = pair[idx]
+        #                 a1 -= x
+        #                 used[idx] = True
+        #                 cnt += 1
                 
-                    
-
-
-
-
-
-
-
-
-
-
-
-        # if test2 and test == 3194:
-        #     print(n)
-        #     print(*a)
-        #     print(*b)
-        #     continue
-        # if test2:
-        #     continue
-        # s = input()
-        # print(f(a, b, 30))
+        #             if a1 < 0 or b1 < 0:
+        #                 break
+        #         except:
+        #             break
+            
+        #     if cnt == n:
+        #         ans.append((a, b))
         
-        
-        
+        # print(ans)
+
+
+            
+            
         
         
         
