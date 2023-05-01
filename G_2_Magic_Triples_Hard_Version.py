@@ -28,6 +28,122 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
+def memodict(f):
+    """memoization decorator for a function taking a single argument"""
+    class memodict(dict):
+        def __missing__(self, key):
+            ret = self[key] = f(key)
+            return ret
+    return memodict().__getitem__
+def pollard_rho(n):
+    """returns a random factor of n"""
+    if n & 1 == 0:
+        return 2
+    if n % 3 == 0:
+        return 3
+    s = ((n - 1) & (1 - n)).bit_length() - 1
+    d = n >> s
+    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
+        p = pow(a, d, n)
+        if p == 1 or p == n - 1 or a % n == 0:
+            continue
+        for _ in range(s):
+            prev = p
+            p = (p * p) % n
+            if p == 1:
+                return gcd(prev - 1, n)
+            if p == n - 1:
+                break
+        else:
+            for i in range(2, n):
+                x, y = i, (i * i + 1) % n
+                f = gcd(abs(x - y), n)
+                while f == 1:
+                    x, y = (x * x + 1) % n, (y * y + 1) % n
+                    y = (y * y + 1) % n
+                    f = gcd(abs(x - y), n)
+                if f != n:
+                    return f
+    return n
+
+
+@memodict
+def prime_factors(n):
+    """returns a Counter of the prime factorization of n"""
+    if n <= 1:
+        return Counter()
+    f = pollard_rho(n)
+    return Counter([n]) if f == n else prime_factors(f) + prime_factors(n // f)
+
+
+def distinct_factors(n):
+    """returns a list of all distinct factors of n"""
+    factors = [1]
+    for p, exp in prime_factors(n).items():
+        factors += [p**i * factor for factor in factors for i in range(1, exp + 1)]
+    return factors
+
+
+def all_factors(n):
+    """returns a sorted list of all distinct factors of n"""
+    small, large = [], []
+    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
+        if not n % i:
+            small.append(i)
+            large.append(n // i)
+    if small[-1] == large[-1]:
+        large.pop()
+    large.reverse()
+    small.extend(large)
+    return small
+
+
+
+
+# MAXN = int(1e6) + 10
+ 
+# # stores smallest prime factor for
+# # every number
+# spf = [0 for i in range(MAXN)]
+ 
+# # Calculating SPF (Smallest Prime Factor)
+# # for every number till MAXN.
+# # Time Complexity : O(nloglogn)
+# def sieve():
+#     spf[1] = 1
+#     for i in range(2, MAXN):
+         
+#         # marking smallest prime factor
+#         # for every number to be itself.
+#         spf[i] = i
+ 
+#     # separately marking spf for
+#     # every even number as 2
+#     for i in range(4, MAXN, 2):
+#         spf[i] = 2
+ 
+#     for i in range(3, int(MAXN ** 0.5) + 1):
+         
+#         # checking if i is prime
+#         if (spf[i] == i):
+             
+#             # marking SPF for all numbers
+#             # divisible by i
+#             for j in range(i * i, MAXN, i):
+                 
+#                 # marking spf[j] if it is
+#                 # not previously marked
+#                 if (spf[j] == j):
+#                     spf[j] = i
+
+# def getFactorization(x):
+#     ret = list()
+#     while (x != 1):
+#         ret.append(spf[x])
+#         x = x // spf[x]
+#     return ret
+
+
 def isPrimeMR(n):
     d = n - 1
     d = d // (d & -d)
@@ -100,339 +216,56 @@ def primeFactor(n):
  
     if n > 1: ret[n] = 1
     if rhoFlg: ret = {x: ret[x] for x in sorted(ret)}
-    return list(ret.keys())
-
-def memodict(f):
-    """memoization decorator for a function taking a single argument"""
-    class memodict(dict):
-        def __missing__(self, key):
-            ret = self[key] = f(key)
-            return ret
-    return memodict().__getitem__
-def pollard_rho(n):
-    """returns a random factor of n"""
-    if n & 1 == 0:
-        return 2
-    if n % 3 == 0:
-        return 3
-    s = ((n - 1) & (1 - n)).bit_length() - 1
-    d = n >> s
-    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
-        p = pow(a, d, n)
-        if p == 1 or p == n - 1 or a % n == 0:
-            continue
-        for _ in range(s):
-            prev = p
-            p = (p * p) % n
-            if p == 1:
-                return gcd(prev - 1, n)
-            if p == n - 1:
-                break
-        else:
-            for i in range(2, n):
-                x, y = i, (i * i + 1) % n
-                f = gcd(abs(x - y), n)
-                while f == 1:
-                    x, y = (x * x + 1) % n, (y * y + 1) % n
-                    y = (y * y + 1) % n
-                    f = gcd(abs(x - y), n)
-                if f != n:
-                    return f
-    return n
-
-
-@memodict
-def prime_factors(n):
-    """returns a Counter of the prime factorization of n"""
-    if n <= 1:
-        return Counter()
-    f = pollard_rho(n)
-    return [i for i in (Counter([n]) if f == n else prime_factors(f) + prime_factors(n // f))]
-
-
-def distinct_factors(n):
-    """returns a list of all distinct factors of n"""
-    factors = [1]
-    for p, exp in prime_factors(n).items():
-        factors += [p**i * factor for factor in factors for i in range(1, exp + 1)]
-    return factors
-
-
-def all_factors(n):
-    """returns a sorted list of all distinct factors of n"""
-    small, large = [], []
-    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
-        if not n % i:
-            small.append(i)
-            large.append(n // i)
-    if small[-1] == large[-1]:
-        large.pop()
-    large.reverse()
-    small.extend(large)
-    return small
-
-
-
-MAXN = int(3e5) + 10
- 
-# stores smallest prime factor for
-# every number
-spf = [0 for i in range(MAXN)]
- 
-# Calculating SPF (Smallest Prime Factor)
-# for every number till MAXN.
-# Time Complexity : O(nloglogn)
-def sieve():
-    spf[1] = 1
-    for i in range(2, MAXN):
-         
-        # marking smallest prime factor
-        # for every number to be itself.
-        spf[i] = i
- 
-    # separately marking spf for
-    # every even number as 2
-    for i in range(4, MAXN, 2):
-        spf[i] = 2
- 
-    for i in range(3, int(MAXN ** 0.5) + 1):
-         
-        # checking if i is prime
-        if (spf[i] == i):
-             
-            # marking SPF for all numbers
-            # divisible by i
-            for j in range(i * i, MAXN, i):
-                 
-                # marking spf[j] if it is
-                # not previously marked
-                if (spf[j] == j):
-                    spf[j] = i
-
-def getFactorization(x):
-    ret = list()
-    while (x != 1):
-        ret.append(spf[x])
-        x = x // spf[x]
- 
     return ret
+
+
+def sqDivisors(n):
+    # fac = Counter(getFactorization(n))
+    fac = primeFactor(n)
+    m = 1
+    for f, p in fac.items():
+        m *= f ** (p // 2)
+    return all_factors(m)[1:]
+
+
 
 
 def main():
     TestCases = 1
+    TestCases = int(input())
     # sieve()
 
     for _ in range(TestCases):
+        # n, k = [int(i) for i in input().split()]
         n = int(input())
         arr = [int(i) for i in input().split()]
-        u, v = [int(i)-1 for i in input().split()]
+        # s = input()
+        arr.sort()
 
-        if u == v:
-            print(1, u + 1, sep = '\n')
-            continue
-        
-        if gcd(arr[u], arr[v]) != 1:
-            print(2)
-            print(u + 1, v + 1)
-            continue
-
-
-
-        N = max(arr) + 1
-
-
-
-        g = [set() for i in range(N)]
-        dd = defaultdict(set)
-        common = defaultdict(int)
-        for i in range(n):
-            pf = primeFactor(arr[i])
-            for j in range(len(pf) - 1):
-                g[pf[j]].add(pf[j + 1])
-                g[pf[j + 1]].add(pf[j])
-                for k in range(j + 1, len(pf)):
-                    common[pf[j] * pf[k]] = i
-                # dd[pf[j]].add(i)
-            # if pf:
-            #     dd[pf[-1]].add(i)
-        
-        dest = set(primeFactor(arr[v]))
-        done = False
-        # print(primeFactor(arr[u]))
-        for source in primeFactor(arr[u]):
-            q = deque([source])
-            parent = [-1] * N
-            vis = [0] * N
-            vis[source] = True
-            last = -1
-            f = 1
-            while q:
-                x = q.popleft()
-                if x in dest:
-                    last = x
-                    break
-                for y in g[x]:
-                    if not vis[y]:
-                        vis[y] = True
-                        parent[y] = x
-                        q.append(y)
+        ans = 0
+        cnt = Counter(arr)
+        for ak in sorted(list(set(arr))):
+            # ak = arr[i]
+            # cnt[ak] += 1
+            for r in sqDivisors(ak):
+                aj = ak // r
+                ai = aj // r
+                ans += cnt[ak] * cnt[ai] * cnt[aj]
+        for k, f in cnt.items():
+            # f = cnt[k]
+            if f < 3: continue
+            ans += (f * (f - 1) * (f - 2))
+        print(ans)
                 
-            if last == -1:
-                continue
 
-            path = []
-            while last != -1:
-                # path.append(dd[last][0] + 1)
-                path.append(last)
-                last = parent[last]
-            
-            # print(len(path))
-            # print(*path[::-1])
-            path.reverse()
-            ans = [u+1]
-            for i in range(len(path) - 1):
-                x, y = path[i], path[i + 1]
-                ans.append(common[x * y] + 1)
-                # st = dd[x].intersection(dd[y])
-                # ans.append(st.pop() + 1)
-            ans.append(v + 1)
-            ans2 = [ans[0]]
-            for i in range(1, len(ans)):
-                if ans[i] != ans[i - 1]:
-                    ans2.append(ans[i])
-            ans = ans2
-            print(len(ans))
-            print(*ans)
-            done = True
-            break
-
-        if not done:
-            print(-1)
-
-
-
-
-
-
-
-
-
-
-
-        # dd = defaultdict(list)
-        # for i in range(n):
-        #     for pf in getFactorization(arr[i]):
-        #         dd[pf].append(i)
         
-        # # print(dict(dd))
 
-        # vis = [False] * n
-        # q = deque([u])
-        # vis[u] = True
-        # parent = [-1] * n
-        # while q:
-        #     idx = q.popleft()
-        #     for pf in getFactorization(arr[idx]):
-        #         for child in dd[pf]:
-        #             if not vis[child]:
-        #                 vis[child] = True
-        #                 parent[child] = idx
-        #                 q.append(child)
 
-        # if not vis[v]:
-        #     print(-1)
-        #     continue
-
-        # ans = []
-        # while v != -1:
-        #     ans.append(v + 1)
-        #     v = parent[v]
         
-        # print(len(ans))
-        # print(*ans[::-1])
-
-
-
-
-
-
-
-
-
-
-
-        # for x in q:
-        #     parent[x] = -2
-        # last = -1
-        # while q:
-        #     node = q.popleft()
-        #     for i in g[node]:
-        #         if parent[i] == -1:
-        #             parent[i] = node
-        #             q.append(i)
-        #             if i in dest:
-        #                 last = i
-        #                 break
         
-        # if last == -1:
-        #     print(-1)
-        #     continue
         
-        # print(parent)
-        # print(last)
-        # path = [v + 1]
         
-        # while last >= 0:
-        #     last = parent[last]
-        #     path.append(dd[last][0] + 1)
         
-        # print(len(path))
-        # print(*path[::-1])
-
-
-        # dd = defaultdict(list)
-        # for i in range(n):
-        #     for pf in getFactorization(arr[i]):
-        #         dd[pf].append(i)
-        
-        # print(dd)
-
-
-        # g = [set() for i in range(n)]
-        # for i in dd:
-        #     for j in range(len(dd[i])-1):
-        #         g[dd[i][j]].add(dd[i][j+1])
-        #         g[dd[i][j+1]].add(dd[i][j])
-
-        # for i in range(n):
-        #     g[i] = list(g[i])
-
-        # path = []
-        # parent = [-1] * n
-        # q = deque([u])
-        # vis = [0]*n
-
-        # while q:
-        #     node = q.popleft()
-        #     vis[node] = 1
-        #     if node == v:
-        #         break
-        #     for i in g[node]:
-        #         if not vis[i]:
-        #             parent[i] = node
-        #             q.append(i)
-        
-        # if parent[v] == -1:
-        #     print(-1)
-        #     return
-        
-        # while v != -1:
-        #     path.append(v)
-        #     v = parent[v]
-        
-        # print(len(path))
-        # print(*[i+1 for i in path[::-1]])
-
         
         
         
