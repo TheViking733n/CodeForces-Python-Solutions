@@ -34,6 +34,7 @@ def calc(person, q, p):
         ans = max(ans, abs(i-j) + abs(j-p))
     return ans
 
+
 def main():
     TestCases = 1
     
@@ -53,14 +54,6 @@ def main():
             ans = min(ans, calc(person, q, p))
         
         print(ans)
-
-
-        
-        
-        
-        
-        
-        
         
         
         
