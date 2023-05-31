@@ -28,96 +28,58 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def twoArraySumEqualK(a, b, k):
-    n = len(a); m = len(b)
-    i = 0; j = m-1
-    cnt = 0
-    while i < n and j >= 0:
-        if a[i] + b[j] == k:
-            cnt += 1
-            i += 1
-            j -= 1
-        elif a[i] + b[j] < k:
-            i += 1
-        else:
-            j -= 1
-    return cnt
+def MSB(num):
+    """Returns Most Significant Bit of a number (Leftmost bit) in O(logN)"""
+    if num <= 0: return 0
+    ans = 1; num >>= 1
+    while num:
+        num >>= 1; ans <<= 1
+    return ans
 
-
-"""
-ai * aj = bi + bj
-
-"""
 
 def main():
     TestCases = 1
     TestCases = int(input())
     
+    ps = [[0] * 20]
+    for i in range(1, int(2e5)+1):
+        p = ps[-1][:]
+        for j in range(20):
+            if i & (1 << j):
+                p[j] += 1
+        ps.append(p)
     for _ in range(TestCases):
-        # n, k = [int(i) for i in input().split()]
-        n = int(input())
-        a = [int(i) for i in input().split()]
-        b = [int(i) for i in input().split()]
-
-        mx = int((2 * n) ** .5) + 5
-        g = defaultdict(list)
-        for i in range(n):
-            g[a[i]].append(b[i])
-        
-        for i in g:
-            g[i] = Counter(g[i])
-        # g = [[0] * (n + 1) for _ in range(mx)]
-        # for i in range(n):
-        #     if a[i] >= mx: continue
-        #     g[a[i]][b[i]] += 1
-
-        # print(dict(g))
+        l, r = [int(i) for i in input().split()]
         ans = 0
-        A = sorted(g.keys())
-        for i in range(len(A)):
-            ai = A[i]
-            if ai >= mx: break
-            for j in range(i+1, len(A)):
-                aj = A[j]
-                p = ai * aj
-                if p > 2 * n: break
-                for bi in g[ai]:
-                    ans += g[ai][bi] * g[aj][p-bi]
-            aj = ai
-            p = ai * aj
-            if p > 2 * n: continue
-            cnt = 0
-            for bi in g[ai]:
-                cnt += g[ai][bi] * (g[aj][p-bi] - (bi==p-bi))
-            ans += cnt >> 1
+        for i in range(20):
+            ans = max(ans, ps[r][i] - ps[l-1][i])
+        print(r - l + 1 - ans)
+
+
+
+
+
+
+
+
+
+
+
+
+        # x = (1 << 32) - 1
+        # for i in range(l, r + 1):
+        #     x &= i
+        # if x:
+        #     print(0)
+        #     continue
+        # m = MSB(r)
+        # ans = r - m + 1
+        # m1 = max(m >> 1, l)
+        # ans = max(ans, m - m1)
+        # print(r - l + 1 - ans)
+
         
-        print(ans)
-                
-
-
-
-
-
-
-
-
-
-
-        # g = defaultdict(list)
-        # for i in range(n):
-        #     g[a[i]].append(b[i])
         
-        # for i in g:
-        #     g[i].sort()
-
-        # print(dict(g))
-        # ans = 0
-        # A = sorted(g.keys())
-        # mx = (2 * n) ** .5
-        # for i in range(len(A)):
-        #     ai = A[i]
-        #     if ai > mx: break
-
         
         
         
@@ -150,13 +112,6 @@ def LSB(num):
     """Returns Least Significant Bit of a number (Rightmost bit) in O(1)"""
     return num & -num
 
-def MSB(num):
-    """Returns Most Significant Bit of a number (Leftmost bit) in O(logN)"""
-    if num <= 0: return 0
-    ans = 1; num >>= 1
-    while num:
-        num >>= 1; ans <<= 1
-    return ans
 
 
 LB = bisect_left   # Lower bound

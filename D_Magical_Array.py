@@ -28,96 +28,40 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def twoArraySumEqualK(a, b, k):
-    n = len(a); m = len(b)
-    i = 0; j = m-1
-    cnt = 0
-    while i < n and j >= 0:
-        if a[i] + b[j] == k:
-            cnt += 1
+def signature(arr):
+    n = len(arr)
+    i, j = 0, n-1
+    while i < j - 1:
+        if arr[i] == 0:
             i += 1
+            continue
+        if arr[j] == 0:
             j -= 1
-        elif a[i] + b[j] < k:
-            i += 1
-        else:
-            j -= 1
-    return cnt
+            continue
+        mn = min(arr[i], arr[j])
+        arr[i] -= mn
+        arr[j] -= mn
+        arr[i+1] += mn
+        arr[j-1] += mn
+    return arr[i], arr[i+1], i
 
-
-"""
-ai * aj = bi + bj
-
-"""
 
 def main():
     TestCases = 1
     TestCases = int(input())
     
-    for _ in range(TestCases):
-        # n, k = [int(i) for i in input().split()]
-        n = int(input())
-        a = [int(i) for i in input().split()]
-        b = [int(i) for i in input().split()]
+    for tt in range(TestCases):
+        n, m = [int(i) for i in input().split()]
+        arr = [[int(i) for i in input().split()] for _ in range(n)]
 
-        mx = int((2 * n) ** .5) + 5
-        g = defaultdict(list)
+        signs = Counter(signature(arr[i]) for i in range(3))
+        real = signs.most_common(1)[0][0]
         for i in range(n):
-            g[a[i]].append(b[i])
-        
-        for i in g:
-            g[i] = Counter(g[i])
-        # g = [[0] * (n + 1) for _ in range(mx)]
-        # for i in range(n):
-        #     if a[i] >= mx: continue
-        #     g[a[i]][b[i]] += 1
-
-        # print(dict(g))
-        ans = 0
-        A = sorted(g.keys())
-        for i in range(len(A)):
-            ai = A[i]
-            if ai >= mx: break
-            for j in range(i+1, len(A)):
-                aj = A[j]
-                p = ai * aj
-                if p > 2 * n: break
-                for bi in g[ai]:
-                    ans += g[ai][bi] * g[aj][p-bi]
-            aj = ai
-            p = ai * aj
-            if p > 2 * n: continue
-            cnt = 0
-            for bi in g[ai]:
-                cnt += g[ai][bi] * (g[aj][p-bi] - (bi==p-bi))
-            ans += cnt >> 1
-        
-        print(ans)
-                
-
-
-
-
-
-
-
-
-
-
-        # g = defaultdict(list)
-        # for i in range(n):
-        #     g[a[i]].append(b[i])
-        
-        # for i in g:
-        #     g[i].sort()
-
-        # print(dict(g))
-        # ans = 0
-        # A = sorted(g.keys())
-        # mx = (2 * n) ** .5
-        # for i in range(len(A)):
-        #     ai = A[i]
-        #     if ai > mx: break
-
+            sign = signature(arr[i])
+            if sign != real:
+                tot, i1, i2 = real[0] + real[1], sign[2], real[2]
+                print(i+1, real[0] + tot * (i1 - i2) - sign[0])
+                break
         
         
         

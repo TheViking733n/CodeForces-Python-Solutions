@@ -28,96 +28,45 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-def twoArraySumEqualK(a, b, k):
-    n = len(a); m = len(b)
-    i = 0; j = m-1
-    cnt = 0
-    while i < n and j >= 0:
-        if a[i] + b[j] == k:
-            cnt += 1
-            i += 1
-            j -= 1
-        elif a[i] + b[j] < k:
-            i += 1
-        else:
-            j -= 1
-    return cnt
+def query(l, r):
+    print('?', 2, l+1, r+1, flush=True)
+    return int(input())
 
-
-"""
-ai * aj = bi + bj
-
-"""
+def reveal(x):
+    print('?', 1, x+1, flush=True)
+    return input()
 
 def main():
     TestCases = 1
-    TestCases = int(input())
     
     for _ in range(TestCases):
-        # n, k = [int(i) for i in input().split()]
         n = int(input())
-        a = [int(i) for i in input().split()]
-        b = [int(i) for i in input().split()]
+        ans = [reveal(0)]
+        seen = {ans[0]: 0}
 
-        mx = int((2 * n) ** .5) + 5
-        g = defaultdict(list)
-        for i in range(n):
-            g[a[i]].append(b[i])
+        for i in range(1, n):
+            cnt = len(seen)
+            arr = [(seen[i], i) for i in seen]
+            arr.sort()
+            cur = -1
+            l, r = 0, cnt-1
+            while l <= r:
+                mid = (l+r)//2
+                idx, ch = arr[mid]
+                if query(idx, i) == cnt - mid:
+                    l = mid+1
+                    cur = ch
+                else:
+                    r = mid-1
+            if cur == -1:
+                cur = reveal(i)
+            seen[cur] = i
+            ans.append(cur)
+        print('!', ''.join(ans), flush=True)
+
+
+
         
-        for i in g:
-            g[i] = Counter(g[i])
-        # g = [[0] * (n + 1) for _ in range(mx)]
-        # for i in range(n):
-        #     if a[i] >= mx: continue
-        #     g[a[i]][b[i]] += 1
-
-        # print(dict(g))
-        ans = 0
-        A = sorted(g.keys())
-        for i in range(len(A)):
-            ai = A[i]
-            if ai >= mx: break
-            for j in range(i+1, len(A)):
-                aj = A[j]
-                p = ai * aj
-                if p > 2 * n: break
-                for bi in g[ai]:
-                    ans += g[ai][bi] * g[aj][p-bi]
-            aj = ai
-            p = ai * aj
-            if p > 2 * n: continue
-            cnt = 0
-            for bi in g[ai]:
-                cnt += g[ai][bi] * (g[aj][p-bi] - (bi==p-bi))
-            ans += cnt >> 1
-        
-        print(ans)
-                
-
-
-
-
-
-
-
-
-
-
-        # g = defaultdict(list)
-        # for i in range(n):
-        #     g[a[i]].append(b[i])
-        
-        # for i in g:
-        #     g[i].sort()
-
-        # print(dict(g))
-        # ans = 0
-        # A = sorted(g.keys())
-        # mx = (2 * n) ** .5
-        # for i in range(len(A)):
-        #     ai = A[i]
-        #     if ai > mx: break
-
         
         
         

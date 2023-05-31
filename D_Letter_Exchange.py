@@ -16,6 +16,7 @@ from collections import deque, Counter, defaultdict
 # from heapq import nsmallest, nlargest, heapify, heappop, heappush, heapreplace
 # from collections import OrderedDict
 # from itertools import permutations
+from functools import lru_cache
 
 
 M=1000000007
@@ -29,84 +30,102 @@ R = randrange(2, 1 << 32)
 # ========================= Main ==========================
 
 
+winner = ''.join(sorted('win'))
+
+@lru_cache(maxsize=None)
+def cangive(s):
+    if s.count('w') >= 2: return 'w'
+    elif s.count('i') >= 2: return 'i'
+    elif s.count('n') >= 2: return 'n'
+    return ''
+
+@lru_cache(maxsize=None)
+def needed(s):
+    req = []
+    if s.count('w') == 0: req.append('w')
+    if s.count('i') == 0: req.append('i')
+    if s.count('n') == 0: req.append('n')
+    return req
+
+@lru_cache(maxsize=None)
+def transact(node, given, taken):
+    node = list(node)
+    node.remove(given)
+    node.append(taken)
+    return ''.join(sorted(node))
+
+def doTransaction(giver, taker, give, take, cnt, transactions):
+    amt = min(len(cnt[giver]), len(cnt[taker]))
+    newGiver = transact(giver, give, take)
+    newTaker = transact(taker, take, give)
+    giver_arr = cnt[giver][-amt:]
+    taker_arr = cnt[taker][-amt:]
+    for _ in range(amt):
+        g = cnt[giver].pop()
+        t = cnt[taker].pop()
+        transactions.append((g+1, t+1, give, take))
+    cnt[newGiver].extend(giver_arr)
+    cnt[newTaker].extend(taker_arr)
+
+
+def findTransaction(cnt, transactions, optimal):
+    """
+    Transaction: (giver, taker, give, take)
+    If optimal is True then:
+        Giver and Taker both will become winner
+    Else:
+        Giver will give the letter whatever he has in excess
+        Taker will give that letter what Giver doesn't have
+    """
+    for giver in cnt:
+        if giver == winner or not cnt[giver]: continue
+        for taker in cnt:
+            if taker == giver or taker == winner or not cnt[taker]:
+                continue
+
+            give = cangive(giver)
+            if optimal:
+                take = cangive(taker)
+                if give not in taker and take not in giver:
+                    doTransaction(giver, taker, give, take, cnt, transactions)
+                    return True
+            else:
+                take_options = needed(giver)
+                for take in take_options:
+                    if take in taker:
+                        doTransaction(giver, taker, give, take, cnt, transactions)
+                        return True
+    return False
+
 
 def main():
-    TestCases = 1
     TestCases = int(input())
-
-    def cangive(s):
-        if s.count('w') >= 2:
-            return 'w'
-        elif s.count('i') >= 2:
-            return 'i'
-        elif s.count('n') >= 2:
-            return 'n'
-        return ''
-    
-    def needed(s):
-        if s.count('w') == 0:
-            return 'w'
-        elif s.count('i') == 0:
-            return 'i'
-        elif s.count('n') == 0:
-            return 'n'
-        return ''
-
-    nodes = set()
-    for w in 'win':
-        for i in 'win':
-            for n in 'win':
-                nodes.add(''.join(sorted(list(w + i + n))))
-    nodes = sorted(list(nodes))
-    print(nodes)
-    m = len(nodes)
-
-    cycle2 = set()
-    for i in range(m):
-        for j in range(m):
-            if cangive(nodes[i]) == needed(nodes[j]):
-                cycle2.add(tuple(sorted([i, j])))
-            # elif cangive(nodes[j]) == needed(nodes[i]):
-            #     cycle2.append((j, i))
-    print(len(cycle2))
-    for i, j in cycle2:
-        print(nodes[i], nodes[j])
-    
-    cycle3 = []
-    for i in range(m):
-        for j in range(m):
-            for k in range(m):
-                if cangive(nodes[i]) == needed(nodes[j]) and cangive(nodes[j]) == needed(nodes[k]) and cangive(nodes[k]) == needed(nodes[i]):
-                    cycle3.append((i, j, k))
-
-    for i, j, k in cycle3:
-        print(nodes[i], nodes[j], nodes[k])
     
     for _ in range(TestCases):
-        # n, k = [int(i) for i in input().split()]
         n = int(input())
-        arr = [''.join(sorted(list(input()))) for i in range(n)]
-        # s = input()
-        p = defaultdict(list)
+        arr = [''.join(sorted(input())) for i in range(n)]
+        persons = defaultdict(list)
         cnt = defaultdict(int)
         ans = []
         for i in range(n):
-            p[arr[i]].append(i)
+            persons[arr[i]].append(i)
             cnt[arr[i]] += 1
 
-        while cnt["inw"] < n:
-            for u, v in cycle2:
-                a, b = nodes[u], nodes[v]
-                if p[a] and p[b]:
-                    mn = min(cnt[a], cnt[b])
-                    cnt[a] -= mn
-                    cnt[b] -= mn
-                    
-        
+        cnt = persons
+        transactions = []
+        while len(cnt[winner]) < n:
+            done = findTransaction(cnt, transactions, optimal=True)
+            if not done:
+                done = findTransaction(cnt, transactions, optimal=False)
 
-        
-        
-        
+        print(len(transactions))
+        for giver, taker, g, t in transactions:
+            print(giver, g, taker, t)
+
+
+
+
+
         
         
         
