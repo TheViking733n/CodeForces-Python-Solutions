@@ -571,30 +571,47 @@ class SegmentTree():
 
 
 # ========= DELETABLE MIN HEAP ==========
-from collections import defaultdict
+
 from heapq import heappush, heappop
-class DeletableMinHeapQ():
+class DeletableMinPQ():
     def __init__(self):
         self.H = []
         self.HC = defaultdict(int)
-    def hpush(self, x):
+        self.size = 0
+    def push(self, x):
         heappush(self.H, x)
         self.HC[x] += 1
-    def hpop(self):
+        self.size += 1
+    def pop(self):
+        assert len(self.H) > 0
         t = heappop(self.H)
         while not self.HC[t]:
             t = heappop(self.H)
         self.HC[t] -= 1
+        self.size -= 1
         return t
-    def hmin(self):
+    def min(self):
+        assert len(self.H) > 0
         t = self.H[0]
         while not self.HC[t]:
             heappop(self.H)
             t = self.H[0]
         return t
-    def hdel(self, x):
+    def remove(self, x):
         if self.HC[x] > 0:
             self.HC[x] -= 1
+            self.size -= 1
+            return True
+        return False
+    def __len__(self):
+        return self.size
+    def __bool__(self):
+        return len(self.H) > 0
+    def __repr__(self):
+        items = []
+        for k in self.HC:
+            items.extend([k]*self.HC[k])
+        return str(sorted(items))
 
 
 
