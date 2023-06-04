@@ -70,5 +70,6 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "xstring": "cpp"
-    }
+    },
+    "cph.general.onceMaintainerMessage": false
 }

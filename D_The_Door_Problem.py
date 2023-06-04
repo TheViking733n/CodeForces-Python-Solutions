@@ -28,73 +28,116 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-"""
-Algorithm:
 
-SOLVE(L, R):
-    if (R - L) <= 100:
-        Calculate answer by bruteforce and return
+def scc(graph):
+    """
+    Finds what strongly connected components each node
+    is a part of in a directed graph,
+    it also finds a weak topological ordering of the nodes
+    """
+    n = len(graph)
+    comp = [-1] * n
+    top_order = []
 
-    Let's trim some trailing digits of L and R
-    Suppose (L, R) = (3389463, 3657655)
-    Then remove some unmatching digits such
-    two unmatching digits remains:
-        (L1, R1) = (338, 365)
-    Now again bruteforce from (L1+1 to R1-1)
-    
-    Note here: since size of L1 is not equal to L, we will repeat the last digit of L1 such that size becomes equal. Similarly for R1 too. So, (L1+1) will always be greater than L and (R1-1) will always be greater than R (provided last digit is replicated to make the length equal)
+    Q = []
+    stack = []
+    new_node = None
+    for root in range(n):
+        if comp[root] >= 0:
+            continue
 
-    Now, also check for L1 and R1 manually, i.e.
-    check(3388888) # discard this because 3388888 < L
-    check(3655555) # valid as 3655555 <= R
-    
-"""
+        # Do a dfs while keeping track of depth
+        Q.append(root)
+        root_depth = len(top_order)
+        while Q:
+            node = Q.pop()
+            if node >= 0:
+                if comp[node] >= 0:
+                    continue
+                # First time
 
-def calc(num):
-    return int(max(str(num))) - int(min(str(num)))
+                # Index the node
+                comp[node] = len(top_order) + len(stack)
+                stack.append(node)
 
-def replicateLastDigit(num, n):
-    return int(str(num) + str(num)[-1] * (n - len(str(num))))
+                # Do a dfs
+                Q.append(~node)
+                Q += graph[node]
+            else:
+                # Second time
+                node = ~node
 
-def firstDifferentDigit(l, r):
-    l, r = str(l), str(r)
-    for i in range(len(l)):
-        if l[i] != r[i]:
-            return i
+                # calc low link
+                low = index = comp[node]
+                for nei in graph[node]:
+                    if root_depth <= comp[nei]:
+                        low = min(low, comp[nei])
 
-def solve(l, r):
-    ans = (calc(r), r)
-    if r - l <= 100: # Bruteforce
-        for i in range(l, r):
-            ans = min(ans, (calc(i), i))
-        return ans
-    
-    # Find the index first different digit
-    idx = firstDifferentDigit(l, r)
-    n = len(str(l))
+                # low link same as index, so create SCC
+                if low == index:
+                    while new_node != node:
+                        new_node = stack.pop()
+                        comp[new_node] = index
+                        top_order.append(new_node)
+                else:
+                    comp[node] = low
 
-    d = 10 ** (n-idx-2)   # To trim the last unmatching digits
-    l1, r1 = l // d, r // d   # If (l, r) = (3357655, 3657655) then (l1, r1) = (335, 365)
-    diff, num = solve(l1+1, r1-1)
-    num = replicateLastDigit(num, n)
-    ans = min(ans, (diff, num))
-    num1, num2 = replicateLastDigit(l1, n), replicateLastDigit(r1, n)
-    if l <= num1 <= r: ans = min(ans, (calc(num1), num1))
-    if l <= num2 <= r: ans = min(ans, (calc(num2), num2))
-    return ans
+    top_order.reverse()
+    return comp, top_order
+
+ 
+class TwoSat:
+    def __init__(self, n):
+        self.n = n
+        self.graph = [[] for _ in range(2 * n)]
+ 
+    def _imply(self, x, y):
+        self.graph[x].append(y if y >= 0 else 2 * self.n + y)
+ 
+    def either(self, x, y):
+        """either x or y must be True"""
+        self._imply(~x, y)
+        self._imply(~y, x)
+ 
+    def set(self, x):
+        """x must be True"""
+        self._imply(~x, x)
+ 
+    def solve(self):
+        comp, top_order = scc(self.graph)
+        for x in range(self.n):
+            if comp[x] == comp[~x]:
+                return False, None
+
+        self.values = [None] * self.n
+        for x in reversed(top_order):
+            y = x if x < self.n else (2 * self.n - 1 - x)
+            if self.values[y] is None:
+                self.values[y] = x < self.n
+        return True, self.values
+
 
 
 def main():
     TestCases = 1
-    TestCases = int(input())
     
     for _ in range(TestCases):
-        l, r = [int(i) for i in input().split()]
-        if len(str(l)) != len(str(r)):
-            print('9' * len(str(l)))
-            continue
-        
-        print(solve(l, r)[1])
+        n, m = [int(i) for i in input().split()]
+        status = [int(i) for i in input().split()]
+        switches = [[] for _ in range(n)]
+        for i in range(m):
+            _, *doors = [int(i)-1 for i in input().split()]
+            for door in doors: switches[door].append(i)
+        sat = TwoSat(m)
+        for i in range(n):
+            x, y = switches[i]
+            if status[i] == 0:
+                sat.either(x, y)
+                sat.either(~x, ~y)
+            else:
+                sat.either(x, ~y)
+                sat.either(~x, y)
+        print('YES' if sat.solve()[0] else 'NO')
 
         
         

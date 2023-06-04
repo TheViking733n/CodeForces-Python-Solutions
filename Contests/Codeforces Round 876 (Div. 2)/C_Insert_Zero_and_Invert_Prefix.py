@@ -28,60 +28,6 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-"""
-Algorithm:
-
-SOLVE(L, R):
-    if (R - L) <= 100:
-        Calculate answer by bruteforce and return
-
-    Let's trim some trailing digits of L and R
-    Suppose (L, R) = (3389463, 3657655)
-    Then remove some unmatching digits such
-    two unmatching digits remains:
-        (L1, R1) = (338, 365)
-    Now again bruteforce from (L1+1 to R1-1)
-    
-    Note here: since size of L1 is not equal to L, we will repeat the last digit of L1 such that size becomes equal. Similarly for R1 too. So, (L1+1) will always be greater than L and (R1-1) will always be greater than R (provided last digit is replicated to make the length equal)
-
-    Now, also check for L1 and R1 manually, i.e.
-    check(3388888) # discard this because 3388888 < L
-    check(3655555) # valid as 3655555 <= R
-    
-"""
-
-def calc(num):
-    return int(max(str(num))) - int(min(str(num)))
-
-def replicateLastDigit(num, n):
-    return int(str(num) + str(num)[-1] * (n - len(str(num))))
-
-def firstDifferentDigit(l, r):
-    l, r = str(l), str(r)
-    for i in range(len(l)):
-        if l[i] != r[i]:
-            return i
-
-def solve(l, r):
-    ans = (calc(r), r)
-    if r - l <= 100: # Bruteforce
-        for i in range(l, r):
-            ans = min(ans, (calc(i), i))
-        return ans
-    
-    # Find the index first different digit
-    idx = firstDifferentDigit(l, r)
-    n = len(str(l))
-
-    d = 10 ** (n-idx-2)   # To trim the last unmatching digits
-    l1, r1 = l // d, r // d   # If (l, r) = (3357655, 3657655) then (l1, r1) = (335, 365)
-    diff, num = solve(l1+1, r1-1)
-    num = replicateLastDigit(num, n)
-    ans = min(ans, (diff, num))
-    num1, num2 = replicateLastDigit(l1, n), replicateLastDigit(r1, n)
-    if l <= num1 <= r: ans = min(ans, (calc(num1), num1))
-    if l <= num2 <= r: ans = min(ans, (calc(num2), num2))
-    return ans
 
 
 def main():
@@ -89,15 +35,35 @@ def main():
     TestCases = int(input())
     
     for _ in range(TestCases):
-        l, r = [int(i) for i in input().split()]
-        if len(str(l)) != len(str(r)):
-            print('9' * len(str(l)))
+        # n, k = [int(i) for i in input().split()]
+        n = int(input())
+        arr = [int(i) for i in input().split()]
+        # s = input()
+        if arr[-1] != 0:
+            print("NO")
             continue
-        
-        print(solve(l, r)[1])
 
-        
-        
+        a2 = [[arr[0]]]
+        for i in range(1, n):
+            if arr[i] == 0:
+                if a2[-1][-1] == 1:
+                    a2[-1].append(arr[i])
+                else:
+                    a2.append([arr[i]])
+            else:
+                if a2[-1][-1] == 1:
+                    a2[-1].append(arr[i])
+                else:
+                    a2.append([arr[i]])
+        ans = []
+        a2.reverse()
+        for i in a2:
+            cnt = len(i)
+            ans.extend([0]*(cnt-1))
+            if cnt > 0:
+                ans.append(cnt-1)
+        print("YES")
+        print(*ans)
         
         
         

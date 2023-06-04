@@ -38,47 +38,112 @@ def main():
         n, m = [int(i) for i in input().split()]
         g = [[] for i in range(n)]
         deg = [0]*n
-        for i in range(m):
+        for _ in range(m):
             u, v = [int(i)-1 for i in input().split()]
             g[u].append(v)
             g[v].append(u)
             deg[u] += 1
             deg[v] += 1
         
-        done = False
+        ans = -1
         for u in range(n):
             if deg[u] < 4: continue
-            for i1 in range(len(g[u])):
-                x = g[u][i1]
-                for i2 in range(i1+1, len(g[u])):
-                    y = g[u][i2]
-                    
-                    vis = [False]*n
-                    vis[x] = vis[y] = vis[u] = True
-                    par = [-1]*n
-                    q = deque([u])
-                    ans = -1
-                    while q:
-                        v = q.popleft()
-                        for w in g[v]:
-                            if w != x and w != y and w != u and vis[w]:
-                                ans = w
+            q = deque([u])
+            vis = [False]*n
+            vis[u] = True
+            par = [-1]*n
+            ans = -1
+            while q:
+                v = q.popleft()
+                for w in g[v]:
+                    if not vis[w]:
+                        vis[w] = True
+                        par[w] = v
+                        q.append(w)
+                    elif w != par[v]:
+                        ok = True
+                        a, b = v, w
+                        seen = {a}
+                        while a != u:
+                            seen.add(a)
+                            a = par[a]
+                        while b != u:
+                            b = par[b]
+                            if b in seen:
+                                ok = False
                                 break
-                            if not vis[w]:
-                                vis[w] = True
-                                par[w] = v
-                                q.append(w)
-                        if ans != -1: break
-                    
-                    if ans != -1:
-                        print("YES")
-                        print(ans+1, u+1, x+1, y+1)
-                        done = True
-                        break
-                if done: break
-            if done: break
-        if not done:
+                        if ok:
+                            ans = w, v
+                            break
+                if ans != -1:
+                    x, y = ans
+                    ans = [(x, y)]
+                    while x != u:
+                        ans.append((par[x], x))
+                        x = par[x]
+                    x1 = ans[-1][1]
+                    while y != u:
+                        ans.append((par[y], y))
+                        y = par[y]
+                    y1 = ans[-1][1]
+                    other = [v for v in g[u] if v not in (x1, y1)]
+                    ans.append((u, other[0]))
+                    ans.append((u, other[1]))
+                    break
+            if ans != -1: break
+        
+        if ans != -1:
+            print("YES")
+            ans = set(tuple(sorted(x)) for x in ans)
+            print(len(ans))
+            print(*[f"{x+1} {y+1}" for x, y in ans], sep="\n")
+
+        else:
             print("NO")
+
+
+
+
+
+
+
+
+
+
+        # done = False
+        # for u in range(n):
+        #     if deg[u] < 4: continue
+        #     for i1 in range(len(g[u])):
+        #         x = g[u][i1]
+        #         for i2 in range(i1+1, len(g[u])):
+        #             y = g[u][i2]
+                    
+        #             vis = [False]*n
+        #             vis[x] = vis[y] = vis[u] = True
+        #             par = [-1]*n
+        #             q = deque([u])
+        #             ans = -1
+        #             while q:
+        #                 v = q.popleft()
+        #                 for w in g[v]:
+        #                     if w != x and w != y and w != u and vis[w]:
+        #                         ans = w
+        #                         break
+        #                     if not vis[w]:
+        #                         vis[w] = True
+        #                         par[w] = v
+        #                         q.append(w)
+        #                 if ans != -1: break
+                    
+        #             if ans != -1:
+        #                 print("YES")
+        #                 print(ans+1, u+1, x+1, y+1)
+        #                 done = True
+        #                 break
+        #         if done: break
+        #     if done: break
+        # if not done:
+        #     print("NO")
 
 
         

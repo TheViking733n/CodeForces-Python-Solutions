@@ -6,217 +6,90 @@ if sys.version_info[0] < 3:
     from __builtin__ import xrange as range
     from future_builtins import ascii, filter, hex, map, oct, zip
 
+from functools import lru_cache
 
-
-
-from math import ceil, floor, factorial, sqrt
-# from math import log,sqrt,cos,tan,sin,radians
-from bisect import bisect_left, bisect_right
-from collections import defaultdict
-from collections import deque, Counter, OrderedDict
-# from heapq import nsmallest, nlargest, heapify, heappop, heappush, heapreplace
-# from bisect import bisect,bisect_left,bisect_right,insort,insort_left,insort_right
-# from decimal import *
-
-# from itertools import permutations
-
-# ======================== Functions declaration Starts ========================
-
-
-abc='abcdefghijklmnopqrstuvwxyz'
-abd={'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,'i':8,'j':9,'k':10,'l':11,'m':12,'n':13,'o':14,'p':15,'q':16,'r':17,'s':18,'t':19,'u':20,'v':21,'w':22,'x':23,'y':24,'z':25}
-
-
-M=1000000007
-# M=998244353
-INF = float("inf")
-PI = 3.141592653589793
-
-def copy2d(lst): return [x[:] for x in lst]   #Copy 2D list... Avoid Using Deepcopy
-def isPowerOfTwo(x): return (x and (not(x & (x - 1))) )
-
-LB = bisect_left   # Lower bound
-UB = bisect_right  # Upper bound
- 
-def BS(a, x):      # Binary Search
-    i = bisect_left(a, x)
-    if i != len(a) and a[i] == x:
-        return i
-    else:
-        return -1
-
-def gcd(x, y):
-    while y:
-        x, y = y, x % y
-    return x
-
-def lcm(x, y):
-    return (x*y)//gcd(x,y)
-
-# import threading
-# def dmain():
-#     sys.setrecursionlimit(1000000)
-#     threading.stack_size(1024000)
-#     thread = threading.Thread(target=main)
-#     thread.start()
-    
 # ========================= Functions declaration Ends =========================
-
-def isPrime(n):
-    if n <= 3: return n > 1
-    if n & 1 == 0 or n % 3 == 0: return False
-    for i in range(5, int(n**0.5)+2, 6):
-        if n % i == 0 or n % (i + 2) == 0:
-            return False
-    return True
-
-def primesbelow(N=1000000):    # Faster version of Sieve of Erathostenes
-    """
-    Input N>=3; Returns a list or set of all primes 2 <= p <= N 
-    Use this to iterate over prime numbers.
-    Don't use this as a substitute for sieve() because
-    multiple lookups will be slower than sieve() as one lookup takes logN time.
-    """
-    N += 1   # To make inclusive of N
-    correction = N % 6 > 1
-    N = {0:N, 1:N-1, 2:N+4, 3:N+3, 4:N+2, 5:N+1}[N%6]
-    sieve_bool = [True] * (N // 3)
-    sieve_bool[0] = False
-    for i in range(int(N ** .5) // 3 + 1):
-        if sieve_bool[i]:
-            k = (3 * i + 1) | 1
-            sieve_bool[k*k // 3::2*k] = [False] * ((N//6 - (k*k)//6 - 1)//k + 1)
-            sieve_bool[(k*k + 4*k - 2*k*(i%2)) // 3::2*k] = [False] * ((N // 6 - (k*k + 4*k - 2*k*(i%2))//6 - 1) // k + 1)
-    
-    # To return set
-    # return {(3 * i + 1) | 1 for i in range(1, N//3 - correction) if sieve_bool[i]}.union({2,3})
-    
-    # To return list
-    return [2, 3] + [(3 * i + 1) | 1 for i in range(1, N//3 - correction) if sieve_bool[i]]
-
-is_prime = []
-def sieve(n=1000000):
-    global is_prime
-    is_prime = [True] * (n + 1)
-    is_prime[0] = is_prime[1] = False
-    for i in range(2, int(n ** 0.5) + 1):
-        if is_prime[i]:
-            for j in range(i * i, n + 1, i):
-                is_prime[j] = False
-
-def primeFactors(n):
-    # cnt = defaultdict(int)
-    sm = 0
-    if n==1:
-        return sm
-    while not n%2:
-        # cnt[2]+=1
-        sm += 1
-        n = n // 2
-    for i in range(3,int(sqrt(n))+1,2):
-        while n % i== 0:
-            # cnt[i] += 1
-            sm += 1
-            n = n // i
-    if n > 2:
-        # cnt[n] += 1
-        sm += 1
-    return sm
-
-# def find_prime_factors(n):
-#     """
-#     Returns a dictionary with all prime factors of n.
-#     """
-#     return d
-from collections import Counter
-
-
-def gcd(x, y):
-    """greatest common divisor of x and y"""
-    while y:
-        x, y = y, x % y
-    return x
-
-
-def memodict(f):
-    """memoization decorator for a function taking a single argument"""
-    class memodict(dict):
-        def __missing__(self, key):
-            ret = self[key] = f(key)
-            return ret
-
-    return memodict().__getitem__
+def isPrimeMR(n):
+    d = n - 1
+    d = d // (d & -d)
+    L = [2, 7, 61] if n < 1<<32 else [2, 3, 5, 7, 11, 13, 17] if n < 1<<48 else [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
+    # L = [2, 3, 5, 7, 11, 13, 17]
+    if n in L:
+        return 1
+    for a in L:
+        t = d
+        y = pow(a, t, n)
+        if y == 1: continue
+        while y != n - 1:
+            y = (y * y) % n
+            if y == 1 or t == n - 1: return 0
+            t <<= 1
+    return 1
+ 
+def findFactorRho(n):
+    from math import gcd
+    m = 1 << n.bit_length() // 8
+    for c in range(1, 99):
+        f = lambda x: (x * x + c) % n
+        y, r, q, g = 2, 1, 1, 1
+        while g == 1:
+            x = y
+            for i in range(r):
+                y = f(y)
+            k = 0
+            while k < r and g == 1:
+                ys = y
+                for i in range(min(m, r - k)):
+                    y = f(y)
+                    q = q * abs(x - y) % n
+                g = gcd(q, n)
+                k += m
+            r <<= 1
+        if g == n:
+            g = 1
+            while g == 1:
+                ys = f(ys)
+                g = gcd(abs(x - ys), n)
+        if g < n:
+            if isPrimeMR(g): return g
+            elif isPrimeMR(n // g): return n // g
+            return findFactorRho(g)
+ 
+@lru_cache(maxsize=None)
+def primeFactor(n):
+    i = 2
+    ret = {}
+    rhoFlg = 0
+    while i*i <= n:
+        k = 0
+        while n % i == 0:
+            n //= i
+            k += 1
+        if k: ret[i] = k
+        i += 1 + i % 2
+        if i == 101 and n >= 2 ** 20:
+            while n > 1:
+                if isPrimeMR(n):
+                    ret[n], n = 1, 1
+                else:
+                    rhoFlg = 1
+                    j = findFactorRho(n)
+                    k = 0
+                    while n % j == 0:
+                        n //= j
+                        k += 1
+                    ret[j] = k
+ 
+    if n > 1: ret[n] = 1
+    if rhoFlg: ret = {x: ret[x] for x in sorted(ret)}
+    return ret
 
 
-def pollard_rho(n):
-    """returns a random factor of n"""
-    if n & 1 == 0:
-        return 2
-    if n % 3 == 0:
-        return 3
-
-    s = ((n - 1) & (1 - n)).bit_length() - 1
-    d = n >> s
-    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
-        p = pow(a, d, n)
-        if p == 1 or p == n - 1 or a % n == 0:
-            continue
-        for _ in range(s):
-            prev = p
-            p = (p * p) % n
-            if p == 1:
-                return gcd(prev - 1, n)
-            if p == n - 1:
-                break
-        else:
-            for i in range(2, n):
-                x, y = i, (i * i + 1) % n
-                f = gcd(abs(x - y), n)
-                while f == 1:
-                    x, y = (x * x + 1) % n, (y * y + 1) % n
-                    y = (y * y + 1) % n
-                    f = gcd(abs(x - y), n)
-                if f != n:
-                    return f
-    return n
-
-
-@memodict
-def prime_factors(n):
-    """returns a Counter of the prime factorization of n"""
-    if n <= 1:
-        return Counter()
-    f = pollard_rho(n)
-    return Counter([n]) if f == n else prime_factors(f) + prime_factors(n // f)
-
-
-def distinct_factors(n):
-    """returns a list of all distinct factors of n"""
-    factors = [1]
-    for p, exp in prime_factors(n).items():
-        factors += [p**i * factor for factor in factors for i in range(1, exp + 1)]
-    return factors
-
-
-def all_factors(n):
-    """returns a sorted list of all distinct factors of n"""
-    small, large = [], []
-    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
-        if not n % i:
-            small.append(i)
-            large.append(n // i)
-    if small[-1] == large[-1]:
-        large.pop()
-    large.reverse()
-    small.extend(large)
-    return small
 
 def main():
     TestCases = 1
     TestCases = int(input())
-    # primes = primesbelow(int(10**(4.5)))
 
-    # print(Counter(find_primes_factors(24)))
     for _ in range(TestCases):
         a,b,k = [int(i) for i in input().split()]
         
@@ -234,8 +107,8 @@ def main():
 
 
         
-        fac1 = prime_factors(a)
-        fac2 = prime_factors(b)
+        fac1 = primeFactor(a)
+        fac2 = primeFactor(b)
 
         nof1 = 0
         for f, pow in fac1.items():
@@ -254,103 +127,6 @@ def main():
 
 
 
-
-
-
-
-
-        # # A = defaultdict(int)
-        # # B = defaultdict(int)
-        # # sm = 0
-        # # a11,b11 = a, b
-        # # for i in primes:
-        # #     while a11 % i == 0 and sm<k and a11>1:
-        # #         # A[i] += 1
-        # #         sm += 1
-        # #         a11 //= i
-        # #     while b11 % i == 0 and sm<k and b11>1:
-        # #         # B[i] += 1
-        # #         sm += 1
-        # #         b11 //= i
-            
-        # #     if sm >= k or (a11==b11==1) or (i>a11 and i>b11):
-        # #         break
-
-        # sm = primeFactors(a) + primeFactors(b)
-
-        # # if a11>1:
-        # #     if isPrime(a11):
-        # #         sm += 1
-        # # if b11>1:
-        # #     if isPrime(b11):
-        # #         sm += 1
-
-        # kmax = sm
-        # print("YES" if k<=kmax else "NO")
-
-
-
-
-
-
-
-
-        # a1 = A-B
-        # b1 = B-A
-        # print(a1)
-        # print(b1)
-
-        # cnt = 0 
-        # for num,pow in a1.items():
-        #     cnt += pow
-        
-        # for num,pow in b1.items():
-        #     cnt += pow
-        
-        # if k < cnt:
-        #     print("NO")
-        #     continue
-
-        # k -= cnt
-        # if k&1:
-        #     print("NO")
-        #     continue
-
-        # intersection = A - a1
-        # for num, pow in intersection.items():
-        #     k -= pow*2
-        
-        # if k <= 0:
-        #     print("YES")
-        # else:
-        #     print("NO")
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
 # =============================== Region Fastio ===============================
 if not os.path.isdir('C:/users/acer'):
     BUFSIZE = 8192
