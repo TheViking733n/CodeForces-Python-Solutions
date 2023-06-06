@@ -18,8 +18,7 @@ from collections import deque, Counter, defaultdict
 # from itertools import permutations
 
 
-M=1000000007
-# M=998244353
+M=998244353
 # INF = float("inf")
 INF = 9223372036854775807
 PI = 3.141592653589793
@@ -28,187 +27,87 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-# def scc(graph):
-#     """
-#     Finds what strongly connected components each node
-#     is a part of in a directed graph,
-#     it also finds a weak topological ordering of the nodes
-#     """
-#     n = len(graph)
-#     comp = [-1] * n
-#     top_order = []
 
-#     Q = []
-#     stack = []
-#     new_node = None
-#     for root in range(n):
-#         if comp[root] >= 0:
-#             continue
+is_prime = []
+def sieve(n=10**6 + 5):
+    global is_prime
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    for i in range(2, int(n ** 0.5) + 1):
+        if is_prime[i]:
+            for j in range(i * i, n + 1, i):
+                is_prime[j] = False
 
-#         # Do a dfs while keeping track of depth
-#         Q.append(root)
-#         root_depth = len(top_order)
-#         while Q:
-#             node = Q.pop()
-#             if node >= 0:
-#                 if comp[node] >= 0:
-#                     continue
-#                 # First time
+sieve()
 
-#                 # Index the node
-#                 comp[node] = len(top_order) + len(stack)
-#                 stack.append(node)
-
-#                 # Do a dfs
-#                 Q.append(~node)
-#                 Q += graph[node]
-#             else:
-#                 # Second time
-#                 node = ~node
-
-#                 # calc low link
-#                 low = index = comp[node]
-#                 for nei in graph[node]:
-#                     if root_depth <= comp[nei]:
-#                         low = min(low, comp[nei])
-
-#                 # low link same as index, so create SCC
-#                 if low == index:
-#                     while new_node != node:
-#                         new_node = stack.pop()
-#                         comp[new_node] = index
-#                         top_order.append(new_node)
-#                 else:
-#                     comp[node] = low
-
-#     top_order.reverse()
-#     return comp, top_order
-
- 
-# class TwoSat:
-#     def __init__(self, n):
-#         self.n = n
-#         self.graph = [[] for _ in range(2 * n)]
- 
-#     def _imply(self, x, y):
-#         self.graph[x].append(y if y >= 0 else 2 * self.n + y)
- 
-#     def either(self, x, y):
-#         """either x or y must be True"""
-#         self._imply(~x, y)
-#         self._imply(~y, x)
- 
-#     def set(self, x):
-#         """x must be True"""
-#         self._imply(~x, x)
- 
-#     def solve(self):
-#         comp, top_order = scc(self.graph)
-#         for x in range(self.n):
-#             if comp[x] == comp[~x]:
-#                 return False, None
-
-#         self.values = [None] * self.n
-#         for x in reversed(top_order):
-#             y = x if x < self.n else (2 * self.n - 1 - x)
-#             if self.values[y] is None:
-#                 self.values[y] = x < self.n
-#         return True, self.values
-
-# def solve(n, edges, zeroes, ones):
-#     sat = TwoSat(n)
-#     for x, y in edges: sat.either(x, y)
-#     for x in zeroes: sat.set(~x)
-#     for x in ones: sat.set(x)
-#     return sat.solve()[1]
-
-def solve(n, edges, init):
-    smaller = [[] for _ in range(n)]
-    ans = init[:]
-    for sm, lar in edges:
-        smaller[lar].append(sm)
-        if ans[lar] == -1: ans[lar] = 1
-        if ans[sm] == -1: ans[sm] = 1
-    for i in range(n):
-        if init[i] != 0: continue
-        for u in smaller[i]:
-            ans[u] = init[u] = 1
-            
-    # For every node in tree,
-    # if any of its child is 0, then it must be 1
-    # if all its parent are 1 or it has no parent, then it will be 0
-    for i in range(n):
-        if not ans[i] or init[i] != -1: continue
-        zeroParFound = False
-        for sm in smaller[i]:
-            if ans[sm] == 0:
-                zeroParFound = True
-                break
-        if not zeroParFound:
-            ans[i] = 0
-    return ans
-
-
+def Inv(x): return powm(x, M - 2, M)
 
 def main():
-    TestCases = 1
-    
-    for _ in range(TestCases):
-        n, q = [int(i) for i in input().split()]
-        queries = []; W = []
-        for _ in range(q):
-            u, v, w = [int(i) - 1 for i in input().split()]
-            queries.append((min(u, v), max(u, v)))
-            W.append(w)
-        ans = [0] * n
-        
-        for bit in range(30):
-            mask = 1 << bit
-            edges, init = [], [-1] * n
-            for i in range(q):
-                u, v, w = queries[i][0], queries[i][1], W[i]
-                if w & mask:
-                    if u == v: init[u] = 1
-                    else: edges.append((u, v))
-                else:
-                    init[u] = init[v] = 0
-            curans = solve(n, edges, init)
-            for i in range(n):
-                ans[i] |= curans[i] << bit
-        print(*ans)
-        
-        
+    n = int(input())
+    nums = [int(i) for i in input().split()]
 
-        # for bit in range(30):
-        #     mask = 1 << bit
-        #     sat = TwoSat(n)
-        #     for u, v, w in queries:
-        #         if w & mask:
-        #             if u == v: sat.set(u)
-        #             else: sat.either(u, v)
-        #         else:
-        #             sat.set(~u)
-        #             if u != v: sat.set(~v)
-        #     curans = sat.solve()[1]
-        #     for i in range(n):
-        #         ans[i] |= curans[i] << bit
-        # print(*ans)
+    primes = defaultdict(int)
+    other = defaultdict(int)
+    for i in nums:
+        if is_prime[i]: primes[i] += 1
+        else: other[i] += 1
+    
+    k = len(primes)
+    if k < n: return print(0)
+
+    fact = [1]
+    for i in range(1, n + 1):
+        fact.append((fact[-1] * i) % M)
+    
+    ans = fact[n]
+    for i in other:
+        ans = (ans * fact[other[i]]) % M
+    
+    arr = []
+    for i in primes:
+        if primes[i] > 1:
+            x = Inv(fact[primes[i]])
+            x1 = Inv(fact[primes[i] - 1])
+            ans = (ans * x1) % M
+            arr.append((x * fact[primes[i] - 1]) % M)
+        else:
+            arr.append(1)
+    
+    r = k - n
+
+    n, k = len(arr), r
+    arr = [0] + arr
+    
+
+    print(n, k)
+    print(arr)
+    dp = [[0] * (k + 1) for _ in range(n + 1)]
+    # For left = 0 -> dp[i][0] = 1
+    for i in range(n + 1): dp[i][0] = 1
+
+    """
+    dp[i][j] += dp[k][j - 1] * arr[i] for all k < i
+    """
+    for left in range(1, k + 1):
+        for i in range(1, n + 1):
+            dp[i][left] = (dp[i - 1][left] + dp[i - 1][left - 1] * arr[i]) % M
+        
+    for row in dp:
+        print(row)
+    sm = 0
+    for i in range(1, n + 1):
+        sm = (sm + dp[i][k]) % M
+    print(sm)
+    ans = (ans * sm) % M
+    print(ans)
+
+
+
+    
         
         
-        # for bit in range(30):
-        #     mask = 1 << bit
-        #     edges, zeroes, ones = [], set(), set()
-        #     for u, v, w in queries:
-        #         if w & mask:
-        #             if u == v: ones.add(u)
-        #             else: edges.append((u, v))
-        #         else:
-        #             zeroes.add(u)
-        #             zeroes.add(v)
-        #     curans = solve(n, edges, zeroes, ones)
-        #     for i in range(n):
-        #         ans[i] |= curans[i] << bit
-        # print(*ans)
+        
+        
         
         
         

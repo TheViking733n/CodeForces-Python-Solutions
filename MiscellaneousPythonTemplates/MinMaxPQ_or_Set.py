@@ -1,3 +1,4 @@
+# Don't use! Use SortedList instead. SortedList is 2x faster and indexable.
 
 from heapq import heappush, heappop, heapify
 from collections import defaultdict

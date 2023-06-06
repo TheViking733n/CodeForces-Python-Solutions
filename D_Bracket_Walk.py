@@ -28,144 +28,134 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-class SegmentTree:
-    def __init__(self, data, default=0, func=lambda a, b: a + b):
-        """initialize the segment tree with data"""
-        self._default = default
-        self._func = func
-        self._len = len(data)
-        self._size = _size = 1 << (self._len - 1).bit_length()
 
-        self.data = [default] * (2 * _size)
-        self.data[_size:_size + self._len] = data
-        for i in reversed(range(_size)):
-            self.data[i] = func(self.data[i + i], self.data[i + i + 1])
+class FenwickTree:
+    def __init__(self, x):
+        """transform list into BIT"""
+        self.arr = x
+        x = self.bit = x[:]
+        for i in range(len(x)):
+            j = i | (i + 1)
+            if j < len(x):
+                x[j] += x[i]
 
-    def __delitem__(self, idx):
-        self[idx] = self._default
+    def update(self, idx, x):
+        """updates bit[idx] += x"""
+        self.arr[idx] += x
+        while idx < len(self.bit):
+            self.bit[idx] += x
+            idx |= idx + 1
 
     def __getitem__(self, idx):
-        return self.data[idx + self._size]
+        return self.arr[idx]
+    
+    def __setitem__(self, idx, x):
+        """updates bit[idx] = x"""
+        self.update(idx, x - self.arr[idx])
+    
+    def __iadd__(self, idx, x):
+        """updates bit[idx] += x"""
+        self.update(idx, x)
 
-    def __setitem__(self, idx, value):
-        idx += self._size
-        self.data[idx] = value
-        idx >>= 1
-        while idx:
-            self.data[idx] = self._func(self.data[2 * idx], self.data[2 * idx + 1])
-            idx >>= 1
 
-    def __len__(self):
-        return self._len
+    def _sum(self, end):
+        """calc sum from [0, end) (zero based)"""
+        x = 0
+        try:
+            while end > 0:
+                x += self.bit[end - 1]
+                end &= end - 1
+            return x
+        except:
+            print(end)
+            exit(1)
+    
+    def query(self, begin, end):
+        """calc sum from [begin, end) (zero based)"""
+        if begin >= end:
+            return 0
+        return self._sum(end) - self._sum(begin)
 
-    def query(self, start, stop):
-        """func of data[start, stop)"""
-        if start >= stop:
-            return self._default
-        start += self._size
-        stop += self._size
-
-        res_left = res_right = self._default
-        while start < stop:
-            if start & 1:
-                res_left = self._func(res_left, self.data[start])
-                start += 1
-            if stop & 1:
-                stop -= 1
-                res_right = self._func(self.data[stop], res_right)
-            start >>= 1
-            stop >>= 1
-
-        return self._func(res_left, res_right)
-
+    def findkth(self, k):
+        """Find largest idx such that sum from [0, idx) <= k"""
+        idx = -1
+        for d in reversed(range(len(self.bit).bit_length())):
+            right_idx = idx + (1 << d)
+            if right_idx < len(self.bit) and k >= self.bit[right_idx]:
+                idx = right_idx
+                k -= self.bit[idx]
+        return idx + 1
+    
     def __repr__(self):
-        return "SegmentTree({0})".format(self.data)
+        return "BIT({})".format(self.arr)
 
 
 
-from heapq import heappush, heappop, heapify
-
-class DeletableMinMaxPQ():
-    def __init__(self, arr=[], isSet=False): # isSet: if True, then it is a set else it is a multiset
-        self.minH = []
-        self.maxH = []
-        self.HC = defaultdict(int)
-        self.size = 0
-        self.isSet = isSet
-        for x in arr:
-            if self.isSet and self.HC[x] > 0:
-                continue
-            self.minH.append(x)
-            self.maxH.append(-x)
-            self.HC[x] += 1
-            self.size += 1
-        heapify(self.minH)
-        heapify(self.maxH)
-
-    def add(self, x: int) -> bool:
-        if self.isSet and self.HC[x] > 0:
+class SortedMultiSet:
+    def __init__(self, iterable=[], max_n=2 * 10**5):
+        """Initialize sorted list instance."""
+        self.N = max_n + 1
+        self.fen = FenwickTree([0] * self.N)
+        self.size = len(iterable)
+        for x in iterable:
+            self.fen.update(x, 1)
+    
+    def __getitem__(self, idx):
+        """Lookup value at `idx`."""
+        if not -self.size <= idx < self.size:
+            raise IndexError("list index out of range")
+        if idx < 0:
+            idx += self.size
+        return self.fen.findkth(idx + 1)
+    
+    def remove(self, x):
+        """Remove first occurrence of value."""
+        assert 0 <= x < self.N
+        if self.fen[x] == 0:
             return False
-        heappush(self.minH, x)
-        heappush(self.maxH, -x)
-        self.HC[x] += 1
-        self.size += 1
+        self.fen.update(x, -1)
+        self.size -= 1
         return True
 
-    def min(self) -> int:
-        assert self.size > 0
-        t = self.minH[0]
-        while not self.HC[t]:
-            heappop(self.minH)
-            t = self.minH[0]
-        return t
+    def add(self, x):
+        """Add value to sorted list."""
+        assert 0 <= x < self.N
+        self.fen.update(x, 1)
+        self.size += 1
 
-    def extractMin(self) -> int:
+    def __contains__(self, x):
+        """Return true if `x` in sorted list."""
+        assert 0 <= x < self.N
+        return self.fen[x] > 0
+    
+    def max(self):
+        """Return max value in sorted list."""
         assert self.size > 0
-        t = heappop(self.minH)
-        while not self.HC[t]:
-            t = heappop(self.minH)
-        self.HC[t] -= 1
-        self.size -= 1
-        return t
+        return self.fen.findkth(self.size-1)
     
-    def max(self) -> int:
+    def min(self):
+        """Return min value in sorted list."""
         assert self.size > 0
-        t = self.maxH[0]
-        while not self.HC[-t]:
-            heappop(self.maxH)
-            t = self.maxH[0]
-        return -t
-    
-    def extractMax(self) -> int:
-        assert self.size > 0
-        t = -heappop(self.maxH)
-        while not self.HC[t]:
-            t = -heappop(self.maxH)
-        self.HC[t] -= 1
-        self.size -= 1
-        return t
-    
-    def remove(self, x) -> bool:
-        if self.HC[x] > 0:
-            self.HC[x] -= 1
-            self.size -= 1
-            return True
-        return False
-    
-    def __contains__(self, x: int) -> bool:
-        return self.HC[x] > 0
+        return self.fen.findkth(0)
     
     def __len__(self):
+        """Return the size of sorted list."""
         return self.size
     
     def __bool__(self):
-        return self.size > 0
-    
+        """Return `True` when sorted list is not empty."""
+        return not self.size == 0
+
     def __repr__(self):
-        items = []
-        for k in self.HC:
-            items.extend([k]*self.HC[k])
-        return str(sorted(items))
+        """Return string representation of sorted list."""
+        ans = []
+        for i in range(self.N):
+            ans.extend([i] * self.fen[i])
+        return "SortedMultiSet({})".format(ans)
+    
+
+
+
 
 def main():
     TestCases = 1
@@ -188,7 +178,7 @@ def main():
                 print("NO")
             continue
 
-        seg = SegmentTree(arr)
+        seg = FenwickTree(arr)
         
         plus = []
         minus = []
@@ -198,8 +188,8 @@ def main():
             elif arr[i] == -1 and arr[i+1] == -1:
                 minus.append(i)
         
-        plus = DeletableMinMaxPQ(plus)
-        minus = DeletableMinMaxPQ(minus)
+        plus = SortedMultiSet(plus, max_n=n)
+        minus = SortedMultiSet(minus, max_n=n)
 
         for _ in range(q):
             pos = int(input()) - 1

@@ -28,187 +28,54 @@ R = randrange(2, 1 << 32)
 
 # ========================= Main ==========================
 
-# def scc(graph):
-#     """
-#     Finds what strongly connected components each node
-#     is a part of in a directed graph,
-#     it also finds a weak topological ordering of the nodes
-#     """
-#     n = len(graph)
-#     comp = [-1] * n
-#     top_order = []
+class RangeQuery:
+    def __init__(self, data, func=max):
+        self.func = func
+        self._data = _data = [list(data)]
+        i, n = 1, len(_data[0])
+        while 2 * i <= n:
+            prev = _data[-1]
+            _data.append([func(prev[j], prev[j + i]) for j in range(n - 2 * i + 1)])
+            i <<= 1
 
-#     Q = []
-#     stack = []
-#     new_node = None
-#     for root in range(n):
-#         if comp[root] >= 0:
-#             continue
+    def query(self, start, stop):
+        """func of data[start, stop)"""
+        depth = (stop - start).bit_length() - 1
+        return self.func(self._data[depth][start], self._data[depth][stop - (1 << depth)])
 
-#         # Do a dfs while keeping track of depth
-#         Q.append(root)
-#         root_depth = len(top_order)
-#         while Q:
-#             node = Q.pop()
-#             if node >= 0:
-#                 if comp[node] >= 0:
-#                     continue
-#                 # First time
-
-#                 # Index the node
-#                 comp[node] = len(top_order) + len(stack)
-#                 stack.append(node)
-
-#                 # Do a dfs
-#                 Q.append(~node)
-#                 Q += graph[node]
-#             else:
-#                 # Second time
-#                 node = ~node
-
-#                 # calc low link
-#                 low = index = comp[node]
-#                 for nei in graph[node]:
-#                     if root_depth <= comp[nei]:
-#                         low = min(low, comp[nei])
-
-#                 # low link same as index, so create SCC
-#                 if low == index:
-#                     while new_node != node:
-#                         new_node = stack.pop()
-#                         comp[new_node] = index
-#                         top_order.append(new_node)
-#                 else:
-#                     comp[node] = low
-
-#     top_order.reverse()
-#     return comp, top_order
-
- 
-# class TwoSat:
-#     def __init__(self, n):
-#         self.n = n
-#         self.graph = [[] for _ in range(2 * n)]
- 
-#     def _imply(self, x, y):
-#         self.graph[x].append(y if y >= 0 else 2 * self.n + y)
- 
-#     def either(self, x, y):
-#         """either x or y must be True"""
-#         self._imply(~x, y)
-#         self._imply(~y, x)
- 
-#     def set(self, x):
-#         """x must be True"""
-#         self._imply(~x, x)
- 
-#     def solve(self):
-#         comp, top_order = scc(self.graph)
-#         for x in range(self.n):
-#             if comp[x] == comp[~x]:
-#                 return False, None
-
-#         self.values = [None] * self.n
-#         for x in reversed(top_order):
-#             y = x if x < self.n else (2 * self.n - 1 - x)
-#             if self.values[y] is None:
-#                 self.values[y] = x < self.n
-#         return True, self.values
-
-# def solve(n, edges, zeroes, ones):
-#     sat = TwoSat(n)
-#     for x, y in edges: sat.either(x, y)
-#     for x in zeroes: sat.set(~x)
-#     for x in ones: sat.set(x)
-#     return sat.solve()[1]
-
-def solve(n, edges, init):
-    smaller = [[] for _ in range(n)]
-    ans = init[:]
-    for sm, lar in edges:
-        smaller[lar].append(sm)
-        if ans[lar] == -1: ans[lar] = 1
-        if ans[sm] == -1: ans[sm] = 1
-    for i in range(n):
-        if init[i] != 0: continue
-        for u in smaller[i]:
-            ans[u] = init[u] = 1
-            
-    # For every node in tree,
-    # if any of its child is 0, then it must be 1
-    # if all its parent are 1 or it has no parent, then it will be 0
-    for i in range(n):
-        if not ans[i] or init[i] != -1: continue
-        zeroParFound = False
-        for sm in smaller[i]:
-            if ans[sm] == 0:
-                zeroParFound = True
-                break
-        if not zeroParFound:
-            ans[i] = 0
-    return ans
+    def __getitem__(self, idx):
+        return self._data[0][idx]
 
 
 
 def main():
     TestCases = 1
+    TestCases = int(input())
     
     for _ in range(TestCases):
-        n, q = [int(i) for i in input().split()]
-        queries = []; W = []
-        for _ in range(q):
-            u, v, w = [int(i) - 1 for i in input().split()]
-            queries.append((min(u, v), max(u, v)))
-            W.append(w)
-        ans = [0] * n
+        n, k, q = [int(i) for i in input().split()]
+        arr = [int(i) for i in input().split()]
         
-        for bit in range(30):
-            mask = 1 << bit
-            edges, init = [], [-1] * n
-            for i in range(q):
-                u, v, w = queries[i][0], queries[i][1], W[i]
-                if w & mask:
-                    if u == v: init[u] = 1
-                    else: edges.append((u, v))
+        rmq = RangeQuery(arr)
+        ans = 0
+        for i in range(n):
+            if i + k > n: break
+            if rmq.query(i, i+k) > q: continue
+            low, high = i, n-1
+            cur = i + k - 1
+            while low <= high:
+                mid = low + high >> 1
+                # print("--", low, high, mid, rmq.query(i, mid+1))
+                if rmq.query(i, mid+1) <= q:
+                    low = mid + 1
+                    cur = mid
                 else:
-                    init[u] = init[v] = 0
-            curans = solve(n, edges, init)
-            for i in range(n):
-                ans[i] |= curans[i] << bit
-        print(*ans)
-        
-        
+                    high = mid - 1
+            ans += cur - (i + k - 1) + 1
+            # print(i, cur, cur - (i + k - 1) + 1)
+        print(ans)
 
-        # for bit in range(30):
-        #     mask = 1 << bit
-        #     sat = TwoSat(n)
-        #     for u, v, w in queries:
-        #         if w & mask:
-        #             if u == v: sat.set(u)
-        #             else: sat.either(u, v)
-        #         else:
-        #             sat.set(~u)
-        #             if u != v: sat.set(~v)
-        #     curans = sat.solve()[1]
-        #     for i in range(n):
-        #         ans[i] |= curans[i] << bit
-        # print(*ans)
         
-        
-        # for bit in range(30):
-        #     mask = 1 << bit
-        #     edges, zeroes, ones = [], set(), set()
-        #     for u, v, w in queries:
-        #         if w & mask:
-        #             if u == v: ones.add(u)
-        #             else: edges.append((u, v))
-        #         else:
-        #             zeroes.add(u)
-        #             zeroes.add(v)
-        #     curans = solve(n, edges, zeroes, ones)
-        #     for i in range(n):
-        #         ans[i] |= curans[i] << bit
-        # print(*ans)
         
         
         
