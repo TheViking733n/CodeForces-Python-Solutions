@@ -20,104 +20,172 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
+from functools import lru_cache
 
+# @lru_cache(maxsize=None)
+# def isPrimeMR(n):
+#     d = n - 1
+#     d = d // (d & -d)
+#     L = [2, 7, 61] if n < 1<<32 else [2, 3, 5, 7, 11, 13, 17] if n < 1<<48 else [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
+#     # L = [2, 3, 5, 7, 11, 13, 17]
+#     if n in L:
+#         return 1
+#     for a in L:
+#         t = d
+#         y = pow(a, t, n)
+#         if y == 1: continue
+#         while y != n - 1:
+#             y = (y * y) % n
+#             if y == 1 or t == n - 1: return 0
+#             t <<= 1
+#     return 1
+ 
+# @lru_cache(maxsize=None)
+# def findFactorRho(n):
+#     from math import gcd
+#     m = 1 << n.bit_length() // 8
+#     for c in range(1, 99):
+#         f = lambda x: (x * x + c) % n
+#         y, r, q, g = 2, 1, 1, 1
+#         while g == 1:
+#             x = y
+#             for i in range(r):
+#                 y = f(y)
+#             k = 0
+#             while k < r and g == 1:
+#                 ys = y
+#                 for i in range(min(m, r - k)):
+#                     y = f(y)
+#                     q = q * abs(x - y) % n
+#                 g = gcd(q, n)
+#                 k += m
+#             r <<= 1
+#         if g == n:
+#             g = 1
+#             while g == 1:
+#                 ys = f(ys)
+#                 g = gcd(abs(x - ys), n)
+#         if g < n:
+#             if isPrimeMR(g): return g
+#             elif isPrimeMR(n // g): return n // g
+#             return findFactorRho(g)
+ 
+# @lru_cache(maxsize=None)
+# def primeFactor(n):
+#     i = 2
+#     ret = {}
+#     rhoFlg = 0
+#     while i*i <= n:
+#         k = 0
+#         while n % i == 0:
+#             n //= i
+#             k += 1
+#         if k: ret[i] = k
+#         i += 1 + i % 2
+#         if i == 101 and n >= 2 ** 20:
+#             while n > 1:
+#                 if isPrimeMR(n):
+#                     ret[n], n = 1, 1
+#                 else:
+#                     rhoFlg = 1
+#                     j = findFactorRho(n)
+#                     k = 0
+#                     while n % j == 0:
+#                         n //= j
+#                         k += 1
+#                     ret[j] = k
+ 
+#     if n > 1: ret[n] = 1
+#     if rhoFlg: ret = {x: ret[x] for x in sorted(ret)}
+#     return len(ret)
+
+MAX_N = int(2e7) + 5                                                            
+sp = [-1] * MAX_N    # Smallest prime of a number, for a prime p, sp[p] = p     
+def init_sp():                                                                  
+    for i in range(2, MAX_N, 2):                                                
+        sp[i] = 2    # For all even no., its sp will be 2                       
+                                                                                
+    for i in range(3, MAX_N, 2):  # Now for odd numbers                         
+        if sp[i] == -1:                                                         
+            sp[i] = j = i                                                       
+            while j * i < MAX_N:                                                
+                if sp[j * i] == -1:                                             
+                    sp[j * i] = i                                               
+                j += 2    
+
+# memo1 = {}                                                
+# def primeFactor(n):       
+#     if n in memo1: return memo1[n]                                                        
+#     seen = set()                    
+#     while n != 1:                                                               
+#         seen.add(sp[n] ^ R)                                                         
+#         n //= sp[n]                                                             
+#     memo1[n] = len(seen)
+#     return len(seen)
+                               
+init_sp()   
+                                                                    
+memo1 = [0] * MAX_N
+for i in range(2, MAX_N):
+    prev = i // sp[i]
+    memo1[i] = memo1[prev] + (sp[i] != sp[prev])
+                                                                                
+
+memo2 = {}
+def divisors(n):
+    if n in memo2: return memo2[n]
+    divs = []
+    for i in range(1, int(n**0.5) + 1):
+        if n % i == 0:
+            j = n // i
+            divs.append(i)
+            if i != j: divs.append(j)
+    memo2[n] = divs
+    return divs
+
+# print(len(divisors(8648640)))
 
 def main():
     TestCases = 1
+    TestCases = int(input())
+    """
+    (ak - b) * G = c
+    GCD(x, y) = G
+    LCM(x, y) = k * G
+    """
     
     for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
-
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
+        a, b, c = [int(i) for i in input().split()]
         
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
+        ans = 0
+        for p in divisors(c):
+            # g = q = c // p
+            if (p + b) % a == 0:
+                k = (p + b) // a  # lcm = k * g
+                pf = memo1[k]
+                ans += 1 << pf
 
-
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
+                # for r in range(1, k + 1):
+                #     if k % r: continue
+                #     s = k // r
+                #     if s < r: break
+                #     # r and s must be coprime
+                #     if gcd(r, s) != 1: continue
+                #     ans.add((r * g, s * g))
+                #     ans.add((s * g, r * g))
                 
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
+        print(ans)
+        # print(len(ans))
+                
 
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
         
         
         

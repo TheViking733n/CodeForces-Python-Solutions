@@ -20,105 +20,34 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-
+def query(x):
+    print("-+"[x>=0], abs(x), flush=True)
+    return int(input())
 
 def main():
-    TestCases = 1
+    cur = int(input())
+
+    seen = [cur]
+    for i in range(999):
+        cur = query(1)
+        if cur in seen:
+            return print("!", len(seen), flush=True)
+        seen.append(cur)
     
-    for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
-
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
-
-
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
-        
+    ans = 1000
+    for i in range(1000):
+        cur = query(1000)
+        if cur in seen:
+            return print("!", ans + 999 - seen.index(cur), flush=True)
+        ans += 1000
         
         
         

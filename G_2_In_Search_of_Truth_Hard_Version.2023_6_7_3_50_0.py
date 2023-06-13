@@ -20,7 +20,8 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
@@ -28,96 +29,78 @@ R = randrange(2, 1 << 32)
 # ========================= Main ==========================
 
 
+def primesbelow(N=int(2000005 ** .5)):    # Faster version of Sieve of Erathostenes
+    """
+    Input N>=3; Returns a list or set of all primes 2 <= p <= N 
+    Use this to iterate over prime numbers.
+    Don't use this as a substitute for sieve() because
+    multiple lookups will be slower than sieve() as one lookup takes logN time.
+    """
+    N += 1   # To make inclusive of N
+    correction = N % 6 > 1
+    N = {0:N, 1:N-1, 2:N+4, 3:N+3, 4:N+2, 5:N+1}[N%6]
+    sieve_bool = [True] * (N // 3)
+    sieve_bool[0] = False
+    for i in range(int(N ** .5) // 3 + 1):
+        if sieve_bool[i]:
+            k = (3 * i + 1) | 1
+            sieve_bool[k*k // 3::2*k] = [False] * ((N//6 - (k*k)//6 - 1)//k + 1)
+            sieve_bool[(k*k + 4*k - 2*k*(i%2)) // 3::2*k] = [False] * ((N // 6 - (k*k + 4*k - 2*k*(i%2))//6 - 1) // k + 1)
+    
+    # To return set
+    # return {(3 * i + 1) | 1 for i in range(1, N//3 - correction) if sieve_bool[i]}.union({2,3})
+    
+    # To return list
+    return [2, 3] + [(3 * i + 1) | 1 for i in range(1, N//3 - correction) if sieve_bool[i]]
+
+
+primes = primesbelow()
+N = 10 ** 6
+def justSmallerMultiple(x):
+    mx = 2 * N
+    return mx - (mx % x)
+
+def query(x):
+    print("-+"[x>=0], abs(x), flush=True)
+    return int(input())
 
 def main():
-    TestCases = 1
+    cur = int(input())
+
+    new = query(1)
+    if cur == new:
+        return print('!', 1)
+    cur = new
+    seed = -1
+    for p in primes:
+        new = query(justSmallerMultiple(p))
+        if cur == new:
+            seed = p
+            break
+        cur = new
     
-    for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
+    assert seed != -1
 
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
+    possible = [seed]
+    while possible[-1] + seed <= N:
+        possible.append(possible[-1] + seed)
+    
+    low, high = 0, len(possible) - 1
+    ans = seed
+    while low <= high:
+        mid = low + high >> 1
+        new = query(possible[mid])
+        if cur == new:
+            ans = possible[mid]
+            low = mid + 1
+        else:
+            high = mid - 1
+        cur = new
 
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
+    print('!', ans)
 
 
 
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
         
         
         

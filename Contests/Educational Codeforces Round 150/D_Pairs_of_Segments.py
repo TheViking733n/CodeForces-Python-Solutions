@@ -20,104 +20,89 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
+from types import GeneratorType
+def bootstrap(f, stack=[]):
+    def wrappedfunc(*args, **kwargs):
+        if stack:
+            return f(*args, **kwargs)
+        else:
+            to = f(*args, **kwargs)
+            while True:
+                if type(to) is GeneratorType:
+                    stack.append(to)
+                    to = next(to)
+                else:
+                    stack.pop()
+                    if not stack:
+                        break
+                    to = stack[-1].send(to)
+            return to
+    return wrappedfunc
 
+
+@bootstrap
+def f(i, en, pick, n):
+    if dp[i][en][pick] != -1: yield dp[i][en][pick]
+    if i >= n: yield 0
+    s, e = arr[i]
+    if pick:
+        if s <= en:
+            dp[i][en][pick] = 2 + (yield f(i + 1, max(e, en), 1 - pick, n))
+            yield dp[i][en][pick]
+        else:
+            dp[i][en][pick] = (yield f(i + 1, max(e, en), pick, n))
+            yield dp[i][en][pick]
+    else:
+        if s >= en: # Don't pick, n, en time of prev should be smaller than start of cur
+            dp[i][en][pick] = (yield f(i + 1, max(e, en), 1 - pick, n))
+            yield dp[i][en][pick]
+        else:
+            dp[i][en][pick] = (yield f(i + 1, max(e, en), pick, n))
+            yield dp[i][en][pick]
+
+dp = arr = None
 
 def main():
+    global dp, arr
     TestCases = 1
+    TestCases = int(input())
     
     for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
-
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
-
-
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
+        # n, k = [int(i) for i in input().split()]
+        n = int(input())
+        arr = [tuple(int(i) for i in input().split()) for _ in range(n)]
+        a2 = []
+        for u, v in arr:
+            a2.append(u)
+            a2.append(v)
+        a2.sort()
+        a3 = [a2[0]]
+        for i in range(1, len(a2)):
+            if a2[i] != a2[i - 1]:
+                a3.append(a2[i])
+        a2 = a3
+        mx = max(a2) + 1
+        inv = myDict(int)
+        for i in range(len(a2)):
+            inv[a2[i]] = i
+        for i in range(n):
+            arr[i] = (inv[arr[i][0]], inv[arr[i][1]])
+        mx = len(a2) + 1
+        dp = [[[-1, -1] for _ in range(mx)] for _ in range(n + 1)]
+        # arr.sort(key=lambda x: x[::-1])
+        arr.sort()
+        # print(arr)
+        ans = f(0, -1, 0, n)
+        print(n - ans)
+               
         
         
         

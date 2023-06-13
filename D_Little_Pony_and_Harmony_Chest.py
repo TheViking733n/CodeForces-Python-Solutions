@@ -20,105 +20,44 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-
+inf = 1 << 30
+isPrime=lambda x: not sum(1 for i in range(2, x) if x%i==0)
+f=lambda x, pr, pi: sum(pi[i] for i in pr if x%i==0)
 
 def main():
-    TestCases = 1
-    
-    for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
-
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
+    n = int(input())
+    arr = list(map(int, input().split()))
+    primes = [i for i in range(1,59) if isPrime(i)][1:]
+    pinverse = [-1] * 59; pinverse[1], ln = 0, len(primes)
+    for i in range(ln): pinverse[primes[i]] = 1<<i
+    T=[0]+[f(i, primes, pinverse) for i in range(1, 59)]
+    dp = [[inf] * (1 << ln) for _ in range(n+1)]
+    dp[0] = [0] * (1 << ln)
+    for j in range(n):
+        v = arr[j]
+        for c1 in range(1, min(2*v, 58)):
+            c, d = T[c1], abs(v - c1)
+            for i in range(len(dp[0])):
+                if c & i: continue
+                dp[j+1][i|c] = min(dp[j+1][i|c], (((dp[j][i]>>6)+d)<<6)+c1)
+    mn = min(dp[-1])
+    i1 = dp[-1].index(mn)
+    ans = []
+    for i in range(n, 0, -1):
+        ans.append(dp[i][i1] & 63)
+        i1 ^= T[ans[-1]]
+    print(*ans[::-1])
 
 
 
 
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
-        
         
         
         

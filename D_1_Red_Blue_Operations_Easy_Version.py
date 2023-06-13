@@ -20,104 +20,72 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-
+from heapq import heappush, heappop, heapify
 
 def main():
     TestCases = 1
     
     for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
+        n, q = [int(i) for i in input().split()]
+        arr = [int(i) for i in input().split()]
+        arr.sort()
+        queries = [int(i) for i in input().split()]
 
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
-
-
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
+        ans = []
+        for k in queries:
+            if k <= n:
+                ans.append(min(arr[i] + max(0, k - i) for i in range(n)))
+                continue
+            negones = k - n + 1 >> 1
+            a2 = [arr[i] + k - i for i in range(n)]
+            if k - n & 1: a2[-1] -= k - n + 1
             
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
+            a2.sort(reverse=True)
+            sm, etc = 0, []
+            for i in range(n):
+                sm += a2[i]
+                etc.append(sm - (i + 1) * a2[i])
             
-        #     ans = max(ans, mx)
+            idx = bisect_right(etc, negones) - 1
+            bars = idx + 1
+            height = a2[idx]
+            negones -= etc[idx]
+            ans.append(min(a2[-1], height - (negones + bars - 1) // bars))
+
+
+
+
+            # a2.sort()
+            # curans = a2[-1]
+            # low, high = 0, curans
+            # while low <= high:
+            #     mid = low + high >> 1
+            #     sm = 0
+            #     for i in range(n): sm += max(0, a2[i] - mid)
+            #     if sm <= negones:
+            #         curans = mid
+            #         high = mid - 1
+            #     else:
+            #         low = mid + 1
+            # for i in range(n):
+            #     x = max(0, a2[i] - curans)
+            #     a2[i] -= x
+            #     negones -= x
+            # a2 = [-i for i in a2]
+            # heapify(a2)
+            # for i in range(negones): heappush(a2, heappop(a2) + 1)
+
+            # ans.append(-max(a2))
         
-        # print(ans)
-
-
-
-        
+        print(*ans)
         
         
         

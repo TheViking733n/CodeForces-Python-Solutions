@@ -1,3 +1,4 @@
+
 class FenwickTree:
     def __init__(self, x):
         """transform list into BIT"""
@@ -27,23 +28,19 @@ class FenwickTree:
         self.update(idx, x)
 
 
-    def _sum(self, end):
+    def sum(self, end):
         """calc sum from [0, end) (zero based)"""
         x = 0
-        try:
-            while end > 0:
-                x += self.bit[end - 1]
-                end &= end - 1
-            return x
-        except:
-            print(end)
-            exit(1)
+        while end > 0:
+            x += self.bit[end - 1]
+            end &= end - 1
+        return x
     
     def query(self, begin, end):
         """calc sum from [begin, end) (zero based)"""
         if begin >= end:
             return 0
-        return self._sum(end) - self._sum(begin)
+        return self.sum(end) - self.sum(begin)
 
     def findkth(self, k):
         """Find largest idx such that sum from [0, idx) <= k"""
@@ -57,3 +54,20 @@ class FenwickTree:
     
     def __repr__(self):
         return "BIT({})".format(self.arr)
+
+
+class RangeUpdatePointQuery:
+    def __init__(self, arr):
+        self.arr = arr
+        self.bit = FenwickTree([0] * (len(arr) + 1))
+    
+    def update(self, l, r, x):
+        """updates arr[l:r] += x"""
+        self.bit.update(l, x)
+        self.bit.update(r, -x)
+    
+    def __getitem__(self, idx):
+        return self.arr[idx] + self.bit.sum(idx+1)
+    
+    def __repr__(self):
+        return "RUPQ({})".format([self[i] for i in range(len(self.arr))])

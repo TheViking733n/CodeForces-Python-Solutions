@@ -20,106 +20,124 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
 
-
+def func(v):
+    ans = 0
+    mx = -1
+    for i in range(len(v) - 1, -1, -1):
+        cur = 10 ** v[i]
+        if v[i] < mx:
+            cur = -cur
+        ans += cur
+        mx = max(mx, v[i])
+    return ans
 
 def main():
-    TestCases = 1
+    s = input()
+
+    if len(s) == 1:
+        print("10000")
+        return
     
-    for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
+    num = [ord(c) - ord('A') for c in s]
+    n = len(s)
+    left = [n] * 5
+    right = [-1] * 5
+    
+    for i in range(n - 1, -1, -1):
+        left[num[i]] = i
+    
+    for i in range(n):
+        right[num[i]] = i
+    
+    ans = func(num)
+    
+    for i in range(5):
+        if left[i] == n:
+            continue
+        dum = num[left[i]]
+        for j in range(5):
+            num[left[i]] = j
+            ans = max(ans, func(num))
+        num[left[i]] = dum
+    
+    for i in range(5):
+        if right[i] == -1:
+            continue
+        dum = num[right[i]]
+        for j in range(5):
+            num[right[i]] = j
+            ans = max(ans, func(num))
+        num[right[i]] = dum
+    
+    print(ans)
 
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
 
 
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
+    # m = {}
+    # x = 1
+    # vals = []
+    # for ch in abc[:5]:
+    #     m[ch.upper()] = x
+    #     vals.append(x)
+    #     x *= 10
+    # arr = [m[i] for i in s]
+    # a2 = [1]
+    # for i in range(1, n):
+    #     if arr[i] == arr[i-1]:
+    #         a2[-1] += 1
+    #     else:
+    #         a2.append(1)
+    # print(a2)
+    
+    # prev = []; sm = 0
+    # next = []
+    # pp = 0
+    # for i in a2:
+    #     tmp = [sm]*i
+    #     if not prev: tmp[0] = 0
+    #     else: tmp[0] = pp
+    #     prev.extend(tmp)
+    #     next.extend([sm+i]*i)
+    #     pp = sm
+    #     sm += i
+    # print(prev)
+    # print(next)
+    # ps = [0]
+    # # tot = 0
+    # for i in range(n):
+    #     idx = next[i]
+    #     if idx >= n:
+    #         sgn = 1
+    #     else:
+    #         sgn = -1 if arr[idx] > arr[i] else 1
+    #     # tot += sgn * arr[i]
+    #     arr[i] *= sgn
+    # for i in arr: ps.append(ps[-1]+i)
+    # tot = ps[-1]
+    # print(tot)
+    # ans = tot
+    # for i in range(1, n):
+    #     for newval in vals:
+    #         if newval == arr[i]: continue
+    #         idx = prev[i]
+    #         curans = tot
+    #         curans -= arr[i]
+    #         curans += newval
+    #         curans -= ps[i] - ps[idx]
                 
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
 
 
 
-        
-        
-        
+
+
         
         
         
@@ -294,5 +312,5 @@ if not os.path.isdir('C:/users/acer'):
 
 if __name__ == "__main__":
     #read()
-    main()
+    for _ in range(int(input())): main()
     #dmain()

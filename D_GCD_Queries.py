@@ -8,6 +8,7 @@ if sys.version_info[0] < 3:
 
 
 from math import ceil, floor, factorial, log10
+from math import gcd as GCD
 # from math import log,sqrt,cos,tan,sin,radians
 from bisect import bisect_left, bisect_right
 from collections import deque, Counter, defaultdict
@@ -20,107 +21,172 @@ from collections import deque, Counter, defaultdict
 
 M=1000000007
 # M=998244353
-oo = 1 << 30
+# INF = float("inf")
+INF = 9223372036854775807
 PI = 3.141592653589793
 R = randrange(2, 1 << 32)
 # R = 0          # Enable this for debugging of dict keys in myDict
 
 # ========================= Main ==========================
+from random import shuffle
+from functools import lru_cache
 
+# arr = [2, 4, 0, 1, 3]
+arr = None
+
+def queryAutoReply(a, b):
+    print(f"GCD({arr[a]}, {arr[b]}) = {GCD(arr[a], arr[b])}", file=sys.stderr, flush=True)
+    return GCD(arr[a], arr[b])
+
+@lru_cache(maxsize=None)
+def gcdHandler(a, b):
+    print('?', a + 1, b + 1, flush=True)
+    if arr: return queryAutoReply(a, b)
+    return int(input())
+
+def gcd(a, b):
+    return gcdHandler(min(a, b), max(a, b))
 
 
 def main():
-    TestCases = 1
+    n = int(input()) if not arr else len(arr)
+
+    suspects = list(range(n))
+    shuffle(suspects)
+    print(suspects, file=sys.stderr, flush=True)
+    # suspects = [5, 6, 3, 0, 2, 4, 7, 1]
+    gcdHandler.cache_clear()
+
+    triplets = []
+
+    TWO = 1
+
+    while len(suspects) > 2:
+        # print("Sus:", [arr[i] for i in suspects], file=sys.stderr, flush=True)
+        n = len(suspects)
+        confirmEven = []
+        notBothEven = []
+        confirmOdd = []
+
+        idx = two = -1
+        while len(suspects) > 2:
+            a, b, c = suspects.pop(), suspects.pop(), suspects.pop()
+            if gcd(a, b) > gcd(b, c):
+                # two = gcd(a, b)
+                # idx = a
+                suspects.append(a)
+                suspects.append(b)
+            elif gcd(a, b) < gcd(b, c):
+                # two = gcd(a, c)
+                # idx = a
+                suspects.append(b)
+                suspects.append(c)
+            else:
+                # two = gcd(a, b)
+                # idx = a
+                suspects.append(a)
+                suspects.append(c)
+
+
+        print(f"{two=}, {TWO=}, {idx=}", file=sys.stderr, flush=True)
+        # print("Sus:", [arr[i] for i in suspects], file=sys.stderr, flush=True)
+        if len(suspects) <= 2:
+            print('!', suspects[0]+1, suspects[-1]+1, flush=True)
+            assert int(input()) == 1
+            return
+        
+        TWO *= two
+        print(f"{TWO=}", file=sys.stderr, flush=True)
+
+        while suspects:
+            a = suspects.pop()
+            if gcd(a, idx) % TWO == 0:
+                confirmEven.append(a)
+            else:
+                confirmOdd.append(a)
+        confirmEven.append(idx)
+        
+        if not suspects:
+            suspects = confirmEven
+            continue
+
+        while len(suspects) >= 2:
+            a, b = suspects.pop(), suspects.pop()
+            if gcd(a, b) % TWO == 0:
+                confirmEven.append(a)
+                confirmEven.append(b)
+                break
+            else:
+                notBothEven.append((a, b))
+        
+        if not confirmEven and n & 1:
+            confirmEven.append(suspects.pop())
+        
+        if not confirmEven: # This can only happen if n is even and notBothEven has one even and one odd in all the pairs
+            assert len(notBothEven) >= 2
+            a, b = notBothEven.pop()  # Either a or b is even
+            c, d = notBothEven.pop()  # Either c or d is even
+            x = gcd(a, c)
+            y = gcd(a, d)
+            if x % TWO == 0:
+                confirmEven.append(a)
+                confirmEven.append(c)
+            elif y % TWO == 0:
+                confirmEven.append(a)
+                confirmEven.append(d)
+            else:
+                # If a was even, then b, c, d are all odd which is impossible
+                # So a must be odd. Hence b is even
+                confirmEven.append(b)
+                notBothEven.append((c, d))
+            
+            even = confirmEven[0]
+            for a, b in notBothEven:
+                if gcd(even, a) % TWO == 0:
+                    confirmEven.append(a)
+                else:
+                    confirmEven.append(b)
+            
+            suspects = confirmEven
+            TWO <<= 1
+            continue
+            
+        even = confirmEven[0]
+        for a, b in notBothEven:
+            if gcd(even, a) % TWO == 0:
+                confirmEven.append(a)
+                confirmOdd.append(b)
+            elif gcd(even, b) % TWO == 0:
+                confirmEven.append(b)
+                confirmOdd.append(a)
+            else:
+                confirmOdd.append(a)
+                confirmOdd.append(b)
+        
+        totalOdd = n >> 1
+        totalEven = n - totalOdd
+        while len(confirmEven) < totalEven and len(confirmOdd) < totalOdd:
+            assert len(suspects) > 0
+            a = suspects.pop()
+            if gcd(even, a) % TWO == 0:
+                confirmEven.append(a)
+            else:
+                confirmOdd.append(a)
+        
+        if len(confirmEven) < totalEven:
+            confirmEven.extend(suspects)
+        
+        suspects = confirmEven
+        TWO <<= 1
     
-    for _ in range(TestCases):
-        s, k = input().split()
-        k = int(k)
-        arr = [abd[ch] for ch in s]
-
-        m = int(input())
-        val = [[0] * 26 for _ in range(26)]
-        for _ in range(m):
-            a, b, v = input().split()
-            val[abd[a]][abd[b]] = int(v)
-
-        dp = [[0] * 26 for _ in range(k+1)]
-        for i, ch in enumerate(arr):
-            dp2 = [[-oo] * 26 for _ in range(k+1)]
-            for moves in range(k+1):
-                for cur in range(26):
-                    v = int(cur != ch)
-                    if moves + v > k: continue
-                    for prev in range(26):
-                        score = val[prev][cur]
-                        if i == 0: score = 0
-                        dp2[moves+v][cur] = max(dp2[moves+v][cur], dp[moves][prev] + score)
-            dp = dp2
-        
-        ans = -oo
-        for moves in range(k+1):
-            ans = max(ans, max(dp[moves]))
-        print(ans)
-        
-                        
+    assert len(suspects) > 0
+    print('!', suspects[0]+1, suspects[-1]+1, flush=True)
+    assert int(input()) == 1
 
 
-
-
-        # ans = -INF
-        # k0 = k
-        # first0 = arr[0]
-        # for first in range(26):
-        #     arr[0] = first
-        #     if arr[0] == first0:
-        #         k = k0
-        #     else:
-        #         k = k0 - 1
-        #     dp = [[0]* 26 for _ in range(k)]
-        #     for ch in arr[1:]:
-        #         for k1 in range(k-1):
-        #             mx = -INF
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = max(mx, dp[k1][a] + val[a][ch])
-        #             dp[k1][ch] = mx
-        #             for a in range(26):
-        #                 if a == ch:
-        #                     continue
-        #                 mx = -INF
-        #                 for b in range(26):
-        #                     mx = max(mx, dp[k1+1][b] + val[a][b])
-        #                 dp[k1][a] = mx
-                
-        #         mx = -INF; k1 = k - 1
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             mx = max(mx, dp[k1][a] + val[a][ch])
-        #         dp[k1][ch] = mx
-        #         for a in range(26):
-        #             if a == ch:
-        #                 continue
-        #             dp[k1][a] = -INF
-
-        #         for r in dp:
-        #             print(*r)
-        #         print()
-            
-        #     mx = 0
-        #     for r in dp:
-        #         mx = max(mx, max(r))
-            
-        #     ans = max(ans, mx)
-        
-        # print(ans)
-
-
-
-        
-        
-        
-        
+    
+    
+    
         
         
         
@@ -171,13 +237,7 @@ def BS(a, x):      # Binary Search
     else:
         return -1
 
-def gcd(x, y):
-    while y:
-        x, y = y, x % y
-    return x
 
-def lcm(x, y):
-    return (x*y)//gcd(x,y)
 
 
 # import threading
@@ -294,5 +354,5 @@ if not os.path.isdir('C:/users/acer'):
 
 if __name__ == "__main__":
     #read()
-    main()
+    for _ in range(int(input())): main()
     #dmain()
